@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/sports/api/cron/daily",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/sports/api/cron/crests",
+      "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/sports/api/cron/season",
+      "schedule": "0 10 * * *"
+    }
+  ]
+}

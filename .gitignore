@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+.next-*/
+out/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Deployment
+.vercel
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# AI agents and skills (any kind): local tooling, never part of the project
+.agents/
+.claude/
+.codex/
+.cursor/
+.devin/
+.freebuff/
+.gemini/
+.opencode/
+.windsurf/
+.github/skills/
+skills/
+skills-lock.json
+**/SKILL.md
+CLAUDE.md
+AGENTS.md
