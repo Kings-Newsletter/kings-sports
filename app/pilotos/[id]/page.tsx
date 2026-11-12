@@ -46,7 +46,7 @@ function StatCard({ label, value, hint }: { label: string; value: string | numbe
   return (
     <div className="scoreboard p-4 shadow-card">
       <p className="text-[0.8125rem] font-medium text-mist-500">{label}</p>
-      <p className="score mt-1 text-4xl leading-none text-mist-50">{value}</p>
+      <p className="score mt-1 text-[clamp(1.5rem,7.5vw,2.25rem)] leading-none text-mist-50">{value}</p>
       {hint ? <p className="mt-1.5 text-xs text-mist-500">{hint}</p> : null}
     </div>
   );
@@ -148,7 +148,7 @@ export default async function DriverPage({ params }: { params: Params }) {
     <>
       <section className="border-b border-line-soft bg-[radial-gradient(60rem_22rem_at_20%_0%,rgb(37_99_235_/_0.16),transparent_70%)]">
         <Container className="py-8 sm:py-12">
-          <nav className="mb-6 flex items-center gap-2 text-sm text-mist-400">
+          <nav className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-mist-400">
             <CompetitionLogo slug={COMPETITION} size={22} />
             <Link href={`/competicoes/${COMPETITION}`} className="hover:text-flood-300">
               Fórmula 1
@@ -163,7 +163,7 @@ export default async function DriverPage({ params }: { params: Params }) {
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
             <div
-              className="relative rounded-full"
+              className="relative w-fit shrink-0 self-start rounded-full sm:self-auto"
               style={color ? { boxShadow: `0 0 0 3px #${color}` } : undefined}
             >
               <AthletePhoto photo={driver.photo} name={driver.name} size={128} />

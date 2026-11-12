@@ -98,6 +98,13 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
   const awayWins = finished && fixture.score!.away > fixture.score!.home;
   const tone = past ? "text-mist-300" : "text-mist-50";
 
+  const metaBase = (
+    <span className="flex min-w-0 items-center gap-2">
+      <CompetitionLogo slug={fixture.competition} size={20} />
+      <span className="truncate text-[0.8125rem] text-mist-400">{competition}</span>
+    </span>
+  );
+
   const meta = (
     <span className="flex min-w-0 items-center gap-2">
       <CompetitionLogo slug={fixture.competition} size={20} />
@@ -117,7 +124,7 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
         <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5">
           <span className={`flex min-w-0 items-center gap-2 ${awayWins ? "text-mist-500" : tone} ${homeWins ? "font-semibold" : ""}`}>
             <TeamCrest url={fixture.home.crest} name={fixture.home.name} size={22} />
-            <span className="truncate">{fixture.home.name}</span>
+            <span className="min-w-0 break-words leading-tight">{fixture.home.name}</span>
           </span>
           <span className="score row-span-2 text-right">
             {hasScore ? (
@@ -131,30 +138,31 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
           </span>
           <span className={`flex min-w-0 items-center gap-2 ${homeWins ? "text-mist-500" : tone} ${awayWins ? "font-semibold" : ""}`}>
             <TeamCrest url={fixture.away.crest} name={fixture.away.name} size={22} />
-            <span className="truncate">{fixture.away.name}</span>
+            <span className="min-w-0 break-words leading-tight">{fixture.away.name}</span>
           </span>
         </div>
       </div>
 
       {/* Telas maiores: competição | mandante placar visitante | onde assistir */}
-      <div className="hidden grid-cols-[7rem_minmax(0,1fr)_5.5rem_minmax(0,1fr)_auto] items-center gap-4 sm:grid">
-        {meta}
+      <div className="hidden grid-cols-[7rem_minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-1 sm:grid lg:grid-cols-[7rem_minmax(0,1fr)_5.5rem_minmax(0,1fr)_auto] lg:gap-4">
+        {metaBase}
         <span className={`flex min-w-0 items-center justify-end gap-2.5 text-right ${awayWins ? "text-mist-500" : tone} ${homeWins ? "font-semibold" : ""}`}>
           <span className="truncate">{fixture.home.name}</span>
           <TeamCrest url={fixture.home.crest} name={fixture.home.name} size={26} />
         </span>
-        <span className="text-center">
+        <span className="flex flex-col items-center gap-1 text-center">
           <CenterBox fixture={fixture} />
+          {fixture.status !== "scheduled" ? <StatusPill fixture={fixture} /> : null}
         </span>
         <span className={`flex min-w-0 items-center gap-2.5 ${homeWins ? "text-mist-500" : tone} ${awayWins ? "font-semibold" : ""}`}>
           <TeamCrest url={fixture.away.crest} name={fixture.away.name} size={26} />
           <span className="truncate">{fixture.away.name}</span>
         </span>
-        <Channels channels={fixture.broadcast} className="justify-end" />
+        <Channels channels={fixture.broadcast} className="max-lg:col-span-full max-lg:mt-1 max-lg:justify-end lg:justify-end" />
       </div>
     </>
   ) : (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:grid sm:grid-cols-[7rem_minmax(0,1fr)_auto] sm:gap-4">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:grid sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-4 sm:gap-y-1 lg:grid-cols-[7rem_minmax(0,1fr)_auto] lg:gap-4">
       {meta}
       <span className="min-w-0">
         <span className={`block font-display text-[1.05rem] font-bold leading-tight ${tone}`}>
@@ -163,7 +171,7 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
         </span>
         {fixture.result ? <span className="mt-0.5 block text-sm text-pitch-400">{fixture.result}</span> : null}
       </span>
-      <Channels channels={fixture.broadcast} className="sm:justify-end" />
+      <Channels channels={fixture.broadcast} className="max-lg:col-span-full max-lg:justify-end sm:justify-end" />
     </div>
   );
 
@@ -223,7 +231,7 @@ function NextUp({ fixture, now }: { fixture: Fixture; now: number }) {
       <div className="mt-3 flex flex-wrap items-center gap-x-8 gap-y-4 sm:gap-x-10">
         <time
           dateTime={fixture.kickoff}
-          className="score text-[clamp(4.25rem,15vw,8.75rem)] leading-[0.78] tracking-[-0.01em] text-mist-50"
+          className="score text-[clamp(3.25rem,15vw,8.75rem)] leading-[0.78] tracking-[-0.01em] text-mist-50"
         >
           {formatTime(fixture.kickoff)}
         </time>

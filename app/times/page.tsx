@@ -62,7 +62,7 @@ export default async function TeamsPage() {
                   </h2>
                   <Link
                     href={`/competicoes/${group.competition}`}
-                    className="text-sm font-medium text-flood-300 underline decoration-flood-500/40 underline-offset-4 hover:text-flood-400"
+                    className="-my-2 py-2 text-sm font-medium text-flood-300 underline decoration-flood-500/40 underline-offset-4 hover:text-flood-400"
                   >
                     Tabela e jogos
                   </Link>

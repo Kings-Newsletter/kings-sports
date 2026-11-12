@@ -51,7 +51,7 @@ function SectionTitle({ children, href, label }: { children: React.ReactNode; hr
     <div className="mb-3 flex items-baseline justify-between gap-3">
       <h2 className="font-display text-2xl font-extrabold text-mist-50">{children}</h2>
       {href ? (
-        <Link href={href} className="text-xs font-medium text-mist-500 hover:text-flood-300">
+        <Link href={href} className="-my-2 py-2 text-xs font-medium text-mist-500 hover:text-flood-300">
           {label ?? "Ver tudo"}
         </Link>
       ) : null}

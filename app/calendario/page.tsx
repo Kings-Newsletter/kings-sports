@@ -117,12 +117,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
       </PageHeader>
 
       {/* Navegação por mês */}
-      <div className="sticky top-[4.05rem] z-30 xl:top-[7.2rem] -mx-4 flex items-center justify-between gap-3 border-b border-line-soft bg-ink-950/90 px-4 py-3 backdrop-blur sm:mx-0 sm:px-0">
-        <Link href={href({ mes: shiftMonth(month, -1) })} aria-label={`Mês anterior: ${monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}`} className="rounded-[4px] border border-line px-3 py-1.5 text-sm text-mist-300 hover:text-mist-50">
-          ‹ {monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}
+      <div className="sticky top-[4.05rem] z-30 xl:top-[7.2rem] -mx-4 flex items-center justify-between gap-2 border-b border-line-soft bg-ink-950/90 px-4 py-3 backdrop-blur sm:mx-0 sm:gap-3 sm:px-0">
+        <Link href={href({ mes: shiftMonth(month, -1) })} aria-label={`Mês anterior: ${monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
+          <span aria-hidden="true" className="sm:hidden">‹</span>
+          <span className="hidden sm:inline">‹ {monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}</span>
         </Link>
-        <div className="text-center">
-          <p className="font-display text-2xl font-extrabold leading-none text-mist-50">
+        <div className="min-w-0 text-center">
+          <p className="truncate font-display text-lg font-extrabold leading-none text-mist-50 sm:text-2xl">
             {capitalize(monthName.format(new Date(`${month}-15T12:00:00Z`)))}
           </p>
           <p className="mt-1 text-xs text-mist-500">
@@ -137,8 +138,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             ) : null}
           </p>
         </div>
-        <Link href={href({ mes: shiftMonth(month, 1) })} aria-label={`Próximo mês: ${monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))}`} className="rounded-[4px] border border-line px-3 py-1.5 text-sm text-mist-300 hover:text-mist-50">
-          {monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))} ›
+        <Link href={href({ mes: shiftMonth(month, 1) })} aria-label={`Próximo mês: ${monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
+          <span aria-hidden="true" className="sm:hidden">›</span>
+          <span className="hidden sm:inline">{monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))} ›</span>
         </Link>
       </div>
 

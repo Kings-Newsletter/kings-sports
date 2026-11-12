@@ -50,13 +50,13 @@ export function PersonCard({
           </span>
         ) : null}
       </div>
-      <div className="flex flex-1 flex-col gap-1 border-t border-line-soft p-3.5">
-        <p className="font-display text-[1.2rem] font-bold leading-tight text-mist-50 group-hover:text-flood-300">{name}</p>
-        {team ? <p className="truncate text-[0.8125rem] text-mist-400">{team}</p> : null}
+      <div className="flex flex-1 flex-col gap-1 border-t border-line-soft p-3 sm:p-3.5">
+        <p className="font-display text-[1.05rem] font-bold leading-tight text-mist-50 [overflow-wrap:anywhere] sm:text-[1.2rem] group-hover:text-flood-300">{name}</p>
+        {team ? <p className="break-words text-[0.8125rem] leading-tight text-mist-400">{team}</p> : null}
         {stat ? (
-          <p className="mt-auto flex items-baseline justify-between gap-2 pt-2">
+          <p className="mt-auto flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 pt-2">
             <span className="text-[0.8125rem] text-mist-500">{stat.label}</span>
-            <span className="score text-[1.5rem] leading-none text-flood-300">{stat.value}</span>
+            <span className="score text-[1.35rem] leading-none text-flood-300 sm:text-[1.5rem]">{stat.value}</span>
           </p>
         ) : null}
       </div>

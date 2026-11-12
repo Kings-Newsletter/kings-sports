@@ -138,7 +138,7 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
       {/* --------------------------------------- Capa: guia do dia + coluna */}
       <section className="border-b border-line-soft">
-        <Container className="grid gap-10 py-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <Container className="grid gap-10 py-8 sm:py-10 xl:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-w-0">
             <div className="mb-6">
               <h1 className="font-display text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-none text-mist-50">
