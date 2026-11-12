@@ -1,7 +1,7 @@
 import { Mail, Newspaper } from "lucide-react";
 import Link from "next/link";
 
-import { Container, CrownMark } from "@/components/ui/icons";
+import { Container, KingsLogo } from "@/components/ui/icons";
 import { NavIcon } from "@/components/ui/nav-icon";
 import { primaryNav, secondaryNav, site } from "@/lib/site";
 
@@ -14,9 +14,7 @@ export function SiteFooter() {
         <div className="grid gap-12 md:grid-cols-[1.3fr_1fr_1fr]">
           <div>
             <Link href="/" className="inline-flex items-center gap-2.5">
-              <span className="grid size-9 place-items-center rounded-[6px] bg-flood-500 text-white">
-                <CrownMark className="size-5" />
-              </span>
+              <KingsLogo className="size-9 shrink-0" />
               <span className="font-display text-xl font-extrabold uppercase tracking-wide text-mist-50">King&apos;s Sports</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-mist-400">{site.description}</p>

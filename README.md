@@ -61,7 +61,7 @@ The interface is in Brazilian Portuguese and is planned to be served at **kingsn
 - **Teams and national teams** — every club in the covered leagues and the 48 World Cup nations, with crests and flags, squads with photos, fixtures, and results.
 - **Players and drivers** — each league's leaders as photo cards and the Formula 1 grid in championship order, each with a full profile.
 - **Formula 1** — race weekends with the circuit layout, each team's current car, and driver and constructor profiles with season results and career stats.
-- **News and analysis** — signed articles, analysis, and transfers, published from versioned JSON.
+- **News and analysis** — signed articles and analysis read from MongoDB, with other editorial data versioned in JSON.
 - **Responsive and accessible** — dark editorial layout with icons, from 375 px phones to wide screens, keyboard navigation, visible focus, and reduced-motion support.
 
 ## Data sources
@@ -121,7 +121,7 @@ No value is invented. When a source does not respond, the page shows an empty st
 │   ├── directory.ts         # Teams, national teams, players, and drivers indexes
 │   ├── commons.ts           # Wikimedia Commons player photos
 │   └── f1-media.ts          # Official F1 car and circuit images
-├── content/                 # Editorial content (versioned JSON)
+├── content/                 # Editorial curation and legacy news import (JSON)
 ├── .github/workflows/ci.yml # Type check and build
 └── vercel.json              # Daily collection crons
 ```
@@ -131,7 +131,7 @@ No value is invented. When a source does not respond, the page shows an empty st
 ### Prerequisites
 
 - [Node.js 20.9 or newer](https://nodejs.org/)
-- A MongoDB connection string for scores and standings (optional; without it, the site runs in file mode and reads `content/`)
+- A MongoDB connection string for news, scores, and standings (required for news; other data can still use `content/`)
 - A [SportAPI](https://sportapi.ai/) key for the fallback provider (optional)
 
 ### Installation
@@ -160,6 +160,7 @@ Open [http://localhost:3000/sports](http://localhost:3000/sports).
 | `npm run start` | Serve the production build |
 | `npm run typecheck` | Type check only |
 | `npm run import:history -- path/BRA.csv` | Import historical Brasileirão results |
+| `npm run import:news` | Migrate `content/noticias.json` into the portal collection without deleting existing articles |
 
 ## Environment variables
 
@@ -167,8 +168,8 @@ Open [http://localhost:3000/sports](http://localhost:3000/sports).
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | In production | Public URL, used for canonical links, Open Graph, and the sitemap (default `https://kingsnewsletter.com/sports`). |
 | `NEXT_PUBLIC_BASE_PATH` | No | Base path (default `/sports`). Use `""` to serve at the root. |
-| `MONGODB_URI` | For live data | MongoDB connection string. Server only. |
-| `MONGODB_DB` | For live data | Database name. |
+| `MONGODB_URI` | For news and live data | MongoDB connection string. Server only. |
+| `MONGODB_DB` | For news and live data | Database name. |
 | `MONGODB_COLLECTION` | No | Collection used by the portal (default `sports`). |
 | `CRON_SECRET` | In production | Bearer token required by `/api/cron/*`. |
 | `SPORTAPI_KEY` | No | SportAPI key for the fallback provider. |
