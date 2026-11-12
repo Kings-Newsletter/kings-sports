@@ -218,7 +218,7 @@ O GitHub Actions roda a checagem de tipos e o build de produção no Node.js 20 
 
 ## Deploy
 
-O projeto está pronto para a [Vercel](https://vercel.com/). Cadastre `NEXT_PUBLIC_SITE_URL`, `MONGODB_URI` e `MONGODB_DB` em **Settings → Environment Variables** antes do deploy. O portal não tem crons: a coleta de dados roda no worker. Para servir o portal em `kingsnewsletter.com/sports`, é preciso um rewrite no projeto que responde por `kingsnewsletter.com`.
+O projeto está pronto para a [Vercel](https://vercel.com/). Cadastre `NEXT_PUBLIC_SITE_URL`, `MONGODB_URI` e `MONGODB_DB` em **Settings → Environment Variables** antes do deploy. O portal não tem crons: a coleta de dados roda no worker. Para servir o portal em `kingsnewsletter.com/sports`, é preciso um rewrite no projeto que responde por `kingsnewsletter.com`. O passo a passo (projeto na Vercel, variáveis, rewrite e ajustes da Cloudflare) está em [docs/deploy.md](./docs/deploy.md).
 
 ## Como contribuir
 

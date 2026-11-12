@@ -24,8 +24,15 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    // A série "Dinheiro em jogo" saiu do site; links antigos levam às notícias.
-    return [{ source: "/dinheiro-em-jogo", destination: "/noticias", permanent: true }];
+    return [
+      // A série "Dinheiro em jogo" saiu do site; links antigos levam às notícias.
+      { source: "/dinheiro-em-jogo", destination: "/noticias", permanent: true },
+      // Com basePath, a raiz do domínio próprio da Vercel (kings-sports.vercel.app)
+      // daria 404. Leva quem chega lá para o portal.
+      ...(basePath
+        ? [{ source: "/", destination: basePath, basePath: false as const, permanent: false }]
+        : []),
+    ];
   },
   async headers() {
     return [
