@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-import { Container, CrownMark } from "@/components/ui/icons";
+import { Container, KingsLogo } from "@/components/ui/icons";
 import { NavIcon } from "@/components/ui/nav-icon";
 import { allNav, primaryNav, secondaryNav, site } from "@/lib/site";
 
@@ -32,9 +32,7 @@ export function SiteHeader() {
       <Container>
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="group flex min-w-0 items-center gap-2.5 leading-none" aria-label={`${site.name}, página inicial`}>
-            <span className="grid size-9 shrink-0 place-items-center rounded-[6px] bg-flood-500 text-white">
-              <CrownMark className="size-5" />
-            </span>
+            <KingsLogo className="size-9 shrink-0" />
             <span className="flex min-w-0 flex-col">
               <span className="truncate font-display text-[1.5rem] font-extrabold uppercase leading-none tracking-wide text-mist-50">
                 King&apos;s Sports

@@ -1,13 +1,11 @@
 import Link from "next/link";
 
-import { Container, CrownMark } from "@/components/ui/icons";
+import { Container, KingsLogo } from "@/components/ui/icons";
 
 export default function NotFound() {
   return (
     <Container className="flex min-h-[60vh] flex-col items-center justify-center py-20 text-center">
-      <span className="grid size-12 place-items-center rounded-xl border border-line bg-ink-850 text-flood-400">
-        <CrownMark className="size-7" />
-      </span>
+      <KingsLogo className="size-12" />
       <p className="kicker mt-6">Erro 404</p>
       <h1 className="mt-3 font-display text-3xl font-black tracking-tight text-mist-50 sm:text-4xl">
         Essa página saiu de campo

@@ -4,7 +4,13 @@ import path from "node:path";
 
 import { catalog, toCompetition } from "@/lib/catalog";
 import { localDayBounds, toLocalYmd } from "@/lib/dates";
-import { collections, fixtureFromDoc, standingsFromDoc } from "@/lib/db/collections";
+import {
+  type ArticleDoc,
+  articleFromDoc,
+  collections,
+  fixtureFromDoc,
+  standingsFromDoc,
+} from "@/lib/db/collections";
 import { getDb, isDbConfigured } from "@/lib/db/mongo";
 import { normalizeTeam, sameTeam } from "@/lib/normalize";
 import type {
@@ -27,9 +33,9 @@ import type {
  *
  * Duas origens:
  *  - Dados esportivos (partidas, tabelas, histórico): MongoDB, alimentado pela
- *    coleta agendada (lib/ingest). Sem MONGODB_URI, cai para /content/*.json.
- *  - Conteúdo editorial (notícias, rodadas, onde assistir, transferências):
- *    sempre /content/*.json, versionado no repositório.
+ *    coleta agendada (lib/ingest). Sem MONGODB_URI, usa /content/*.json quando disponível.
+ *  - Notícias: MongoDB. Sem MONGODB_URI, não há notícias publicadas.
+ *  - Demais conteúdos editoriais: /content/*.json, versionado no repositório.
  *
  * Regra editorial: NADA é gerado, estimado ou preenchido por padrão.
  * Sem dado, a interface mostra estado vazio explícito.
@@ -55,7 +61,6 @@ async function readCollection<T>(file: string): Promise<T[]> {
   }
 }
 
-const loadArticles = cache(() => readCollection<Article>("noticias.json"));
 const loadExtraCompetitions = cache(() => readCollection<Competition>("competicoes.json"));
 const loadJsonFixtures = cache(() => readCollection<Fixture>("partidas.json"));
 const loadJsonStandings = cache(() => readCollection<Standings>("classificacoes.json"));
@@ -98,28 +103,73 @@ export type ArticleQuery = {
   excludeSlug?: string;
 };
 
+function articleSortPipeline(filter: Record<string, unknown>, limit?: number) {
+  const pipeline: Record<string, unknown>[] = [
+    { $match: filter },
+    { $addFields: { publishedAtSort: { $toDate: "$publishedAt" } } },
+    { $sort: { publishedAtSort: -1 } },
+    { $unset: "publishedAtSort" },
+  ];
+  if (limit && limit > 0) pipeline.push({ $limit: limit });
+  return pipeline;
+}
+
 export async function getArticles(query: ArticleQuery = {}): Promise<Article[]> {
-  const all = byNewest(await loadArticles(), "publishedAt");
-  const filtered = all.filter((article) => {
-    if (query.sport && article.sport !== query.sport) return false;
-    if (query.competition && article.competition !== query.competition) return false;
-    if (query.kind && article.kind !== query.kind) return false;
-    if (query.tag && !article.tags?.includes(query.tag)) return false;
-    if (query.series && article.series !== query.series) return false;
-    if (query.excludeSlug && article.slug === query.excludeSlug) return false;
-    return true;
-  });
-  return query.limit ? filtered.slice(0, query.limit) : filtered;
+  return fromDb(
+    "articles",
+    async () => {
+      const db = await getDb();
+      const filter: Record<string, unknown> = {};
+      if (query.sport) filter.sport = query.sport;
+      if (query.competition) filter.competition = query.competition;
+      if (query.kind) filter.kind = query.kind;
+      if (query.tag) filter.tags = query.tag;
+      if (query.series) filter.series = query.series;
+      if (query.excludeSlug) {
+        filter._id = { $nin: [query.excludeSlug, `article:${query.excludeSlug}`] };
+      }
+
+      const cursor = collections(db)
+        .articles.aggregate<ArticleDoc & { type?: string }>(
+          articleSortPipeline(filter, query.limit),
+        );
+      return (await cursor.toArray()).map(articleFromDoc);
+    },
+    async () => [],
+  );
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const all = await loadArticles();
-  return all.find((article) => article.slug === slug) ?? null;
+  return fromDb(
+    "article",
+    async () => {
+      const db = await getDb();
+      const article = await collections(db).articles.findOne({
+        _id: { $in: [slug, `article:${slug}`] },
+      });
+      return article ? articleFromDoc(article) : null;
+    },
+    async () => null,
+  );
 }
 
 export async function getFeaturedArticle(): Promise<Article | null> {
-  const articles = byNewest(await loadArticles(), "publishedAt");
-  return articles.find((article) => article.featured) ?? articles[0] ?? null;
+  return fromDb(
+    "featured article",
+    async () => {
+      const articles = collections(await getDb()).articles;
+      const featured = await articles
+        .aggregate<ArticleDoc & { type?: string }>(articleSortPipeline({ featured: true }, 1))
+        .next();
+      if (featured) return articleFromDoc(featured);
+
+      const latest = await articles
+        .aggregate<ArticleDoc & { type?: string }>(articleSortPipeline({}, 1))
+        .next();
+      return latest ? articleFromDoc(latest) : null;
+    },
+    async () => null,
+  );
 }
 
 /* ----------------------------- Competições ------------------------------- */

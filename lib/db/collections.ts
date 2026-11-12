@@ -12,17 +12,17 @@ import type {
   WithId,
 } from "mongodb";
 
-import type { Fixture, HistoricalMatch, Standings, StatBoard } from "@/lib/types";
+import type { Article, Fixture, HistoricalMatch, Standings, StatBoard } from "@/lib/types";
 
 /**
  * Armazenamento do King's Sports.
  *
  * Tudo fica em UMA coleção (`sports`, ou MONGODB_COLLECTION) dentro do banco da
  * King's Newsletter. Cada documento tem um campo `type` que separa os tipos:
- * fixture, standings, history, api_usage, ingest_run, kv e crest. O portal nunca lê
- * nem escreve nas coleções da Newsletter.
+ * fixture, standings, history, api_usage, ingest_run, kv, crest, stats e article.
+ * O portal nunca lê nem escreve nas coleções da Newsletter.
  *
- * Só a coleta (lib/ingest) e o import de histórico escrevem aqui.
+ * A coleta e os importadores escrevem nesta coleção.
  */
 
 export const COLLECTION_NAME = process.env.MONGODB_COLLECTION || "sports";
@@ -31,6 +31,12 @@ export type FixtureDoc = Omit<Fixture, "id" | "kickoff" | "updatedAt"> & {
   _id: string; // "<provedor>:<id no provedor>"
   kickoff: Date;
   updatedAt: Date;
+};
+
+export type ArticleDoc = Omit<Article, "publishedAt" | "updatedAt"> & {
+  _id: string; // "article:<slug>"
+  publishedAt: Date | string;
+  updatedAt?: Date | string;
 };
 
 export type StandingsDoc = Omit<Standings, "updatedAt"> & {
@@ -82,7 +88,16 @@ export type StatsDoc = Omit<StatBoard, "updatedAt"> & {
   updatedAt: Date;
 };
 
-type DocType = "fixture" | "standings" | "history" | "api_usage" | "ingest_run" | "kv" | "crest" | "stats";
+type DocType =
+  | "fixture"
+  | "standings"
+  | "history"
+  | "api_usage"
+  | "ingest_run"
+  | "kv"
+  | "crest"
+  | "stats"
+  | "article";
 
 /**
  * Visão de um tipo dentro da coleção compartilhada: injeta `type` em toda
@@ -158,6 +173,7 @@ class TypedView<T extends Document> {
 export function collections(db: Db) {
   const shared = db.collection<Document>(COLLECTION_NAME);
   return {
+    articles: new TypedView<ArticleDoc>(shared, "article"),
     fixtures: new TypedView<FixtureDoc>(shared, "fixture"),
     standings: new TypedView<StandingsDoc>(shared, "standings"),
     history: new TypedView<HistoryDoc>(shared, "history"),
@@ -183,6 +199,9 @@ export function ensureIndexes(db: Db): Promise<void> {
       shared.createIndex({ type: 1, homeKey: 1, date: -1 }),
       shared.createIndex({ type: 1, awayKey: 1, date: -1 }),
       shared.createIndex({ type: 1, provider: 1, month: 1 }),
+      shared.createIndex({ type: 1, publishedAt: -1 }),
+      shared.createIndex({ type: 1, sport: 1, publishedAt: -1 }),
+      shared.createIndex({ type: 1, competition: 1, publishedAt: -1 }),
       // Só documentos de execução têm `startedAt`: expiram em 30 dias.
       shared.createIndex({ startedAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 }),
     ]).then(() => undefined);
@@ -197,6 +216,24 @@ export function fixtureFromDoc(doc: WithId<FixtureDoc> & { type?: string }): Fix
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { _id, kickoff, updatedAt, type, ...rest } = doc;
   return { ...rest, id: _id, kickoff: kickoff.toISOString(), updatedAt: updatedAt.toISOString() };
+}
+
+export function articleFromDoc(doc: WithId<ArticleDoc> & { type?: string }): Article {
+  const { _id, publishedAt, updatedAt, type: _type, ...rest } = doc;
+  const slug = _id.startsWith("article:") ? _id.slice("article:".length) : _id;
+  const toIsoString = (value: Date | string) => {
+    const date = value instanceof Date ? value : new Date(value);
+    if (!Number.isFinite(date.getTime())) {
+      throw new Error(`Data inválida no artigo "${slug}".`);
+    }
+    return date.toISOString();
+  };
+  return {
+    ...rest,
+    slug,
+    publishedAt: toIsoString(publishedAt),
+    ...(updatedAt ? { updatedAt: toIsoString(updatedAt) } : {}),
+  };
 }
 
 export function standingsFromDoc(doc: WithId<StandingsDoc> & { type?: string }): Standings {

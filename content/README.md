@@ -1,13 +1,20 @@
 # Acervo editorial (`/content`)
 
-Cada arquivo é um array JSON. Vazio (`[]`) significa **sem conteúdo publicado** — a
-interface trata isso com estado vazio, nunca com dado fictício.
+Os arquivos de acervo são arrays JSON. Vazio (`[]`) significa **sem conteúdo publicado** — a
+interface trata isso com estado vazio, nunca com dado fictício. Notícias são lidas do MongoDB;
+`noticias.json` serve somente para migração do acervo legado.
 
 Os tipos completos estão em `lib/types.ts`. Abaixo, o formato esperado de cada item.
 
 ---
 
-## `noticias.json` → `Article[]`
+## `noticias.json` → `Article[]` (migração)
+
+Para migrar os artigos existentes para a coleção MongoDB configurada, rode
+`npm run import:news`. O importador atualiza artigos pelo slug sem apagar artigos que
+existem apenas no banco. Depois da migração, publique e mantenha notícias diretamente no
+MongoDB com `type: "article"`, `_id` igual a `"article:<slug>"` e `publishedAt`/
+`updatedAt` como datas BSON. O restante dos campos segue o formato abaixo.
 
 ```json
 [

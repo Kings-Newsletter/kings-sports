@@ -61,7 +61,7 @@ A interface é em português do Brasil e o endereço planejado é **kingsnewslet
 - **Times e seleções**: todos os clubes das ligas acompanhadas e as 48 seleções da Copa do Mundo, com escudos e bandeiras, elencos com fotos, jogos e resultados.
 - **Jogadores e pilotos**: os líderes de cada liga em cartões com foto e o grid da Fórmula 1 na ordem do campeonato, cada um com ficha completa.
 - **Fórmula 1**: fins de semana de corrida com o desenho da pista, o carro atual de cada equipe e fichas de pilotos e construtores com resultados da temporada e números da carreira.
-- **Notícias e análises**: textos assinados, análises e transferências, publicados a partir de JSON versionado.
+- **Notícias e análises**: textos assinados e análises lidos do MongoDB, com os demais dados editoriais versionados em JSON.
 - **Responsivo e acessível**: layout editorial escuro com ícones, do celular de 375 px às telas largas, navegação por teclado, foco visível e suporte a movimento reduzido.
 
 ## Fontes de dados
@@ -121,7 +121,7 @@ Nenhum valor é inventado. Quando uma fonte não responde, a página mostra um e
 │   ├── directory.ts         # Índices de times, seleções, jogadores e pilotos
 │   ├── commons.ts           # Fotos de jogadores do Wikimedia Commons
 │   └── f1-media.ts          # Imagens oficiais da F1: carros e circuitos
-├── content/                 # Conteúdo editorial (JSON versionado)
+├── content/                 # Curadoria editorial e migração legada de notícias (JSON)
 ├── .github/workflows/ci.yml # Checagem de tipos e build
 └── vercel.json              # Crons diários de coleta
 ```
@@ -131,7 +131,7 @@ Nenhum valor é inventado. Quando uma fonte não responde, a página mostra um e
 ### Pré-requisitos
 
 - [Node.js 20.9 ou mais novo](https://nodejs.org/)
-- Uma string de conexão do MongoDB para placares e tabelas (opcional; sem ela, o site roda em modo arquivo e lê `content/`)
+- Uma string de conexão do MongoDB para notícias e dados esportivos (necessária para exibir notícias; outros dados ainda podem usar `content/`)
 - Uma chave da [SportAPI](https://sportapi.ai/) para a fonte reserva (opcional)
 
 ### Instalação
@@ -160,6 +160,7 @@ Abra [http://localhost:3000/sports](http://localhost:3000/sports).
 | `npm run start` | Serve o build de produção |
 | `npm run typecheck` | Só a checagem de tipos |
 | `npm run import:history -- caminho/BRA.csv` | Importa o histórico de resultados do Brasileirão |
+| `npm run import:news` | Migra `content/noticias.json` para a coleção do portal, sem remover artigos existentes |
 
 ## Variáveis de ambiente
 
@@ -167,8 +168,8 @@ Abra [http://localhost:3000/sports](http://localhost:3000/sports).
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Em produção | URL pública, usada em canonical, Open Graph e sitemap (padrão `https://kingsnewsletter.com/sports`). |
 | `NEXT_PUBLIC_BASE_PATH` | Não | Caminho base (padrão `/sports`). Use `""` para servir na raiz. |
-| `MONGODB_URI` | Para dados ao vivo | String de conexão do MongoDB. Só no servidor. |
-| `MONGODB_DB` | Para dados ao vivo | Nome do banco. |
+| `MONGODB_URI` | Para notícias e dados ao vivo | String de conexão do MongoDB. Só no servidor. |
+| `MONGODB_DB` | Para notícias e dados ao vivo | Nome do banco. |
 | `MONGODB_COLLECTION` | Não | Coleção usada pelo portal (padrão `sports`). |
 | `CRON_SECRET` | Em produção | Token Bearer exigido por `/api/cron/*`. |
 | `SPORTAPI_KEY` | Não | Chave da SportAPI, a fonte reserva. |

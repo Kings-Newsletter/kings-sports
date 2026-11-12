@@ -12,7 +12,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "import:history": "node --env-file=.env.local scripts/import-history.mjs"
+    "import:history": "node --env-file=.env.local scripts/import-history.mjs",
+    "import:news": "node --env-file=.env.local scripts/import-news.mjs"
   },
   "dependencies": {
     "lucide-react": "1.61.0",
