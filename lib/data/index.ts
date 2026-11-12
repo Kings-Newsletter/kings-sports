@@ -33,7 +33,7 @@ import type {
  *
  * Duas origens:
  *  - Dados esportivos (partidas, tabelas, histórico): MongoDB, alimentado pela
- *    coleta agendada (lib/ingest). Sem MONGODB_URI, usa /content/*.json quando disponível.
+ *    coleta do worker (kings-worker). Sem MONGODB_URI, usa /content/*.json quando disponível.
  *  - Notícias: MongoDB. Sem MONGODB_URI, não há notícias publicadas.
  *  - Demais conteúdos editoriais: /content/*.json, versionado no repositório.
  *

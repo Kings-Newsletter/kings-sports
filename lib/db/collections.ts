@@ -22,7 +22,9 @@ import type { Article, Fixture, HistoricalMatch, Standings, StatBoard } from "@/
  * fixture, standings, history, api_usage, ingest_run, kv, crest, stats e article.
  * O portal nunca lê nem escreve nas coleções da Newsletter.
  *
- * A coleta e os importadores escrevem nesta coleção.
+ * Quem escreve aqui é a coleta, que roda no worker da King's Newsletter
+ * (kings-worker, src/sports), e os importadores de scripts/. O
+ * worker também cria os índices.
  */
 
 export const COLLECTION_NAME = process.env.MONGODB_COLLECTION || "sports";
@@ -183,33 +185,6 @@ export function collections(db: Db) {
     crests: new TypedView<CrestDoc>(shared, "crest"),
     stats: new TypedView<StatsDoc>(shared, "stats"),
   };
-}
-
-let indexesReady: Promise<void> | null = null;
-
-/** Cria os índices uma vez por processo (idempotente). Todos começam por `type`. */
-export function ensureIndexes(db: Db): Promise<void> {
-  if (!indexesReady) {
-    const shared = db.collection(COLLECTION_NAME);
-    indexesReady = Promise.all([
-      shared.createIndex({ type: 1, kickoff: 1 }),
-      shared.createIndex({ type: 1, sport: 1, kickoff: 1 }),
-      shared.createIndex({ type: 1, competition: 1, kickoff: 1 }),
-      shared.createIndex({ type: 1, status: 1, kickoff: 1 }),
-      shared.createIndex({ type: 1, homeKey: 1, date: -1 }),
-      shared.createIndex({ type: 1, awayKey: 1, date: -1 }),
-      shared.createIndex({ type: 1, provider: 1, month: 1 }),
-      shared.createIndex({ type: 1, publishedAt: -1 }),
-      shared.createIndex({ type: 1, sport: 1, publishedAt: -1 }),
-      shared.createIndex({ type: 1, competition: 1, publishedAt: -1 }),
-      // Só documentos de execução têm `startedAt`: expiram em 30 dias.
-      shared.createIndex({ startedAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 }),
-    ]).then(() => undefined);
-    indexesReady.catch(() => {
-      indexesReady = null;
-    });
-  }
-  return indexesReady;
 }
 
 export function fixtureFromDoc(doc: WithId<FixtureDoc> & { type?: string }): Fixture {

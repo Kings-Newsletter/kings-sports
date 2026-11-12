@@ -86,7 +86,8 @@ Nenhum valor é inventado. Quando uma fonte não responde, a página mostra um e
 | Frontend | Next.js 16 (App Router, server components), React 19, TypeScript (strict) |
 | Estilo | Tailwind CSS 4 com tokens de design, fontes auto-hospedadas via `next/font` (Barlow, Barlow Condensed) |
 | Ícones | Lucide |
-| Servidor | Route handlers do Next.js e um agendador no próprio processo (`instrumentation.ts`) |
+| Servidor | Server components do Next.js; o portal só lê do banco |
+| Coleta de dados | Roda no King's Worker (`kings-worker`), fora da Vercel |
 | Dados | MongoDB (driver oficial para Node.js), coleção única `sports` |
 | Qualidade | TypeScript, GitHub Actions |
 
@@ -108,22 +109,20 @@ Nenhum valor é inventado. Quando uma fonte não responde, a página mostra um e
 │   ├── pilotos/             # Pilotos da F1
 │   ├── construtores/        # Construtores da F1
 │   ├── noticias/            # Notícias
-│   ├── analises/            # Análises
-│   └── api/cron/[job]/      # Rotas protegidas de coleta de dados
+│   └── analises/            # Análises
 ├── components/
 │   ├── layout/              # Cabeçalho e rodapé
 │   ├── sports/              # Linha do tempo, placares, tabelas, cartões de ficha
 │   └── ui/                  # Cabeçalhos de página, ícones, estados vazios
 ├── lib/
 │   ├── data/                # Camada de dados usada por todas as páginas
-│   ├── ingest/              # Jobs de coleta, agendador e adaptadores de provedores
 │   ├── catalog.ts           # Competições acompanhadas e caminhos nos provedores
 │   ├── directory.ts         # Índices de times, seleções, jogadores e pilotos
 │   ├── commons.ts           # Fotos de jogadores do Wikimedia Commons
 │   └── f1-media.ts          # Imagens oficiais da F1: carros e circuitos
 ├── content/                 # Curadoria editorial e migração legada de notícias (JSON)
 ├── .github/workflows/ci.yml # Checagem de tipos e build
-└── vercel.json              # Crons diários de coleta
+└── vercel.json              # Configurações do projeto na Vercel
 ```
 
 ## Como começar
@@ -132,7 +131,6 @@ Nenhum valor é inventado. Quando uma fonte não responde, a página mostra um e
 
 - [Node.js 20.9 ou mais novo](https://nodejs.org/)
 - Uma string de conexão do MongoDB para notícias e dados esportivos (necessária para exibir notícias; outros dados ainda podem usar `content/`)
-- Uma chave da [SportAPI](https://sportapi.ai/) para a fonte reserva (opcional)
 
 ### Instalação
 
@@ -155,7 +153,7 @@ Abra [http://localhost:3000/sports](http://localhost:3000/sports).
 
 | Comando | Descrição |
 | --- | --- |
-| `npm run dev` | Servidor de desenvolvimento; também roda a coleta de dados quando `MONGODB_URI` está definida |
+| `npm run dev` | Servidor de desenvolvimento |
 | `npm run build` | Build de produção, incluindo a checagem de tipos |
 | `npm run start` | Serve o build de produção |
 | `npm run typecheck` | Só a checagem de tipos |
@@ -168,28 +166,24 @@ Abra [http://localhost:3000/sports](http://localhost:3000/sports).
 | --- | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Em produção | URL pública, usada em canonical, Open Graph e sitemap (padrão `https://kingsnewsletter.com/sports`). |
 | `NEXT_PUBLIC_BASE_PATH` | Não | Caminho base (padrão `/sports`). Use `""` para servir na raiz. |
-| `MONGODB_URI` | Para notícias e dados ao vivo | String de conexão do MongoDB. Só no servidor. |
-| `MONGODB_DB` | Para notícias e dados ao vivo | Nome do banco. |
+| `MONGODB_URI` | Para notícias e dados esportivos | String de conexão do MongoDB. Só no servidor. |
+| `MONGODB_DB` | Para notícias e dados esportivos | Nome do banco. |
 | `MONGODB_COLLECTION` | Não | Coleção usada pelo portal (padrão `sports`). |
-| `CRON_SECRET` | Em produção | Token Bearer exigido por `/api/cron/*`. |
-| `SPORTAPI_KEY` | Não | Chave da SportAPI, a fonte reserva. |
-| `ESPN_LIVE_MIN_INTERVAL_SEC` | Não | Segundos entre coletas ao vivo na ESPN (padrão 15). |
-| `LOCAL_SCHEDULER` | Não | `true` liga o agendador no `next start`; `false` o desliga no desenvolvimento. |
 
-Variáveis com o prefixo `NEXT_PUBLIC_` vão no JavaScript publicado. As do MongoDB, do cron e das chaves de API não têm prefixo e nunca chegam ao navegador. Tetos de chamadas e outras opções estão no `.env.example`.
+Variáveis com o prefixo `NEXT_PUBLIC_` vão no JavaScript publicado. As do MongoDB não têm prefixo e nunca chegam ao navegador. As chaves e os tetos de chamadas dos provedores ficam configurados no worker, não aqui.
 
 ## Coleta de dados
 
-As páginas só leem do banco, então os limites dos provedores nunca dependem do número de visitas. Cada job é uma rota protegida (`Authorization: Bearer <CRON_SECRET>`):
+As páginas só leem do banco, então os limites dos provedores nunca dependem do número de visitas. Toda a coleta roda no King's Worker (`kings-worker`, em `src/sports`), um serviço que fica no ar 24 horas por dia. Assim o portal não dispara crons nem execuções serverless na Vercel.
 
-| Requisição | O que faz |
-| --- | --- |
-| `GET /sports/api/cron/daily` | Jogos de ontem até sete dias à frente, tabelas e estatísticas de todas as ligas, além da Fórmula 1 |
-| `GET /sports/api/cron/season` | Calendário da temporada inteira de cada liga, renovado toda semana; continua de onde parou |
-| `GET /sports/api/cron/crests` | Escudos de times que faltam |
-| `GET /sports/api/cron/live` | Placar ao vivo; só chama um provedor enquanto há jogo em andamento |
+| Job | Quando roda | O que faz |
+| --- | --- | --- |
+| `live` | A cada 15 segundos | Placar e relógio ao vivo; só chama um provedor quando há jogo em andamento ou prestes a começar |
+| `daily` | Quando a última execução tem mais de 12 horas | Jogos de ontem até sete dias à frente, tabelas e estatísticas de todas as ligas, além da Fórmula 1 |
+| `crests` | Depois de cada `daily` | Escudos de times que faltam |
+| `season` | A cada 2 minutos | Calendário da temporada inteira de cada liga, renovado toda semana; continua de onde parou |
 
-Em desenvolvimento, o próprio servidor roda esses jobs: o ao vivo a cada 15 segundos, com trava própria, e o diário quando a última execução tem mais de 12 horas. Na Vercel, os jobs diários rodam pelo `vercel.json`, e o ao vivo precisa de um agendador externo.
+O worker grava na mesma coleção `sports` que este portal lê. Ao incluir uma competição, atualize juntos o `lib/catalog.ts` daqui e o `src/sports/catalog.js` do worker: o worker usa o catálogo para saber o que coletar, e o portal, para exibir.
 
 ## Rotas
 
@@ -218,14 +212,13 @@ O GitHub Actions roda a checagem de tipos e o build de produção no Node.js 20 
 
 ## Notas de segurança
 
-- **Rotas de coleta:** `/api/cron/*` recusa requisições sem o `CRON_SECRET` exato, comparado em tempo constante.
-- **MongoDB:** acessado só no servidor. O portal lê e escreve numa única coleção e nunca toca nas coleções da King's Newsletter. O repositório ignora os arquivos `.env`; configure os segredos no provedor de hospedagem.
-- **ESPN:** a API é pública, mas não documentada. Se um endpoint mudar, a competição afetada cai para a SportAPI e o motivo fica registrado no resumo do job.
+- **MongoDB:** acessado só no servidor. O portal lê uma única coleção e nunca toca nas coleções da King's Newsletter. O repositório ignora os arquivos `.env`; configure os segredos no provedor de hospedagem.
+- **ESPN:** a API é pública, mas não documentada. Se um endpoint mudar, a competição afetada cai para a SportAPI e o motivo fica registrado no resumo do job no worker.
 - **Imagens:** as fotos de jogadores do Wikimedia Commons têm licenças livres que costumam exigir atribuição; o site ainda não exibe os créditos.
 
 ## Deploy
 
-O projeto está pronto para a [Vercel](https://vercel.com/). Cadastre `NEXT_PUBLIC_SITE_URL`, `MONGODB_URI`, `MONGODB_DB`, `CRON_SECRET` e, se quiser, `SPORTAPI_KEY` em **Settings → Environment Variables** antes do deploy. Os crons diário, da temporada e de escudos estão em `vercel.json`; para o placar ao vivo, chame `/sports/api/cron/live` de um agendador externo. Para servir o portal em `kingsnewsletter.com/sports`, é preciso um rewrite no projeto que responde por `kingsnewsletter.com`.
+O projeto está pronto para a [Vercel](https://vercel.com/). Cadastre `NEXT_PUBLIC_SITE_URL`, `MONGODB_URI` e `MONGODB_DB` em **Settings → Environment Variables** antes do deploy. O portal não tem crons: a coleta de dados roda no worker. Para servir o portal em `kingsnewsletter.com/sports`, é preciso um rewrite no projeto que responde por `kingsnewsletter.com`.
 
 ## Como contribuir
 
