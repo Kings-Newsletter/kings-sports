@@ -99,6 +99,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={site.lang} className={`${barlow.variable} ${barlowCondensed.variable}`}>
       <body className="page-backdrop min-h-dvh antialiased">
+        {/* Sem JavaScript as fotos não recebem o sinal de "carregada": mostra direto. */}
+        <noscript>
+          <style>{".img-fade{opacity:1!important}"}</style>
+        </noscript>
         <a
           href="#conteudo"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-flood-500 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"

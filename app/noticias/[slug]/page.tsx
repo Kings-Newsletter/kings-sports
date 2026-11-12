@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ArticleCard } from "@/components/news/article-card";
+import { FadeImage } from "@/components/ui/fade-image";
 import { Container } from "@/components/ui/icons";
 import { getArticleBySlug, getArticles } from "@/lib/data";
 import { formatDate } from "@/lib/format";
+import { wikimediaSrcSet } from "@/lib/images";
 import { parseBody, renderInline } from "@/lib/markdown";
 import { buildMetadata } from "@/lib/seo";
 import { getSport } from "@/lib/sports";
@@ -123,12 +125,18 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
         {article.cover?.src ? (
           <figure className="mt-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={article.cover.src}
-              alt={article.cover.alt}
-              className="w-full rounded-card border border-line-soft object-cover"
-            />
+            {/* Quadro de proporção fixa: foto vertical não estica a página; o recorte
+                privilegia o terço de cima, onde costumam estar rosto e camisa. */}
+            <div className="relative aspect-[4/3] overflow-hidden rounded-card border border-line-soft bg-ink-800 sm:aspect-[3/2]">
+              <FadeImage
+                src={article.cover.src}
+                srcSet={wikimediaSrcSet(article.cover.src, [960, 1280, 1920])}
+                sizes="(min-width: 48rem) 768px, 100vw"
+                alt={article.cover.alt}
+                fetchPriority="high"
+                className="size-full object-cover object-[50%_25%]"
+              />
+            </div>
             {article.cover.credit ? (
               <figcaption className="mt-2 text-xs text-mist-600">{article.cover.credit}</figcaption>
             ) : null}

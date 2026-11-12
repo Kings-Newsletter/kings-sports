@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { formatDate } from "@/lib/format";
+import { wikimediaSrcSet } from "@/lib/images";
 import { getSport } from "@/lib/sports";
 import type { Article } from "@/lib/types";
+import { FadeImage } from "@/components/ui/fade-image";
 import { SportIcon } from "@/components/ui/sport-icon";
 
 const kindLabel: Record<Article["kind"], string> = {
@@ -42,9 +44,14 @@ export function ArticleCard({ article, featured = false }: { article: Article; f
         }`}
       >
         {article.cover?.src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <FadeImage
             src={article.cover.src}
+            srcSet={wikimediaSrcSet(article.cover.src, [500, 960, 1280])}
+            sizes={
+              featured
+                ? "(min-width: 64rem) 50vw, (min-width: 40rem) 50vw, 100vw"
+                : "(min-width: 64rem) 25vw, (min-width: 40rem) 50vw, 100vw"
+            }
             alt={article.cover.alt}
             className="size-full object-cover"
             loading="lazy"

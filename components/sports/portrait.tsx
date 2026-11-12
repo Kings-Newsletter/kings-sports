@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
+import { FadeImage } from "@/components/ui/fade-image";
 import { sharpPhoto } from "@/lib/images";
 
 /**
@@ -27,18 +28,11 @@ export function Portrait({
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
-  const ref = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    const img = ref.current;
-    if (img && img.complete && img.naturalWidth === 0) setFailed(true);
-  }, [photo]);
 
   if (photo && !failed) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        ref={ref}
+      <FadeImage
+        key={photo}
         src={sharpPhoto(photo, displayPx)}
         alt={`Foto de ${name}`}
         loading="lazy"
