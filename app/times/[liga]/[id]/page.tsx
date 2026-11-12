@@ -109,19 +109,28 @@ export default async function TeamPage({ params }: { params: Params }) {
               <ul className="scoreboard divide-y divide-line-soft overflow-hidden shadow-card">
                 {upcoming.slice(0, 6).map((game) => (
                   <li key={game.id}>
-                    <Link href={`/partidas/espn-${game.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-ink-800/60">
-                      <span className="w-16 shrink-0">
+                    <Link href={`/partidas/espn-${game.id}`} className="flex items-center gap-2.5 px-3 py-3 hover:bg-ink-800/60 sm:gap-3 sm:px-4">
+                      <span className="hidden w-16 shrink-0 sm:block">
                         <span className="block font-display text-xs font-bold text-mist-500">
                           {formatShortDate(game.date)}
                         </span>
                         <span className="score text-base text-mist-200">{formatTime(game.date)}</span>
                       </span>
-                      <span className="text-xs text-mist-500">{game.home ? "vs" : "@"}</span>
+                      <span className="hidden text-xs text-mist-500 sm:inline">{game.home ? "vs" : "@"}</span>
                       <TeamCrest url={game.opponentLogo} name={game.opponent} size={26} />
-                      <span className="truncate font-medium text-mist-100">{game.opponent}</span>
-                      {game.state === "in" ? (
-                        <span className="ml-auto font-display text-xs font-bold text-live-400">Ao vivo</span>
-                      ) : null}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2">
+                          <span className="truncate font-medium text-mist-100">{game.opponent}</span>
+                          {game.state === "in" ? (
+                            <span className="shrink-0 font-display text-xs font-bold text-live-400">Ao vivo</span>
+                          ) : null}
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-mist-500 sm:hidden">
+                          <span>{game.home ? "vs" : "@"}</span>
+                          <span className="font-display font-bold">{formatShortDate(game.date)}</span>
+                          <span className="score text-mist-400">{formatTime(game.date)}</span>
+                        </span>
+                      </span>
                     </Link>
                   </li>
                 ))}
@@ -135,7 +144,7 @@ export default async function TeamPage({ params }: { params: Params }) {
               <ul className="scoreboard divide-y divide-line-soft overflow-hidden shadow-card">
                 {played.slice(0, 8).map((game) => (
                   <li key={game.id}>
-                    <Link href={`/partidas/espn-${game.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-ink-800/60">
+                    <Link href={`/partidas/espn-${game.id}`} className="flex items-center gap-2.5 px-3 py-3 hover:bg-ink-800/60 sm:gap-3 sm:px-4">
                       {game.result ? (
                         <span
                           className={`grid size-6 shrink-0 place-items-center rounded-[3px] font-display text-xs font-bold ${RESULT_STYLE[game.result]}`}
@@ -143,13 +152,19 @@ export default async function TeamPage({ params }: { params: Params }) {
                           {game.result}
                         </span>
                       ) : null}
-                      <span className="w-14 shrink-0 font-display text-xs font-bold text-mist-500">
+                      <span className="hidden w-12 shrink-0 font-display text-xs font-bold text-mist-500 sm:block sm:w-14">
                         {formatShortDate(game.date)}
                       </span>
-                      <span className="text-xs text-mist-500">{game.home ? "vs" : "@"}</span>
+                      <span className="hidden text-xs text-mist-500 sm:inline">{game.home ? "vs" : "@"}</span>
                       <TeamCrest url={game.opponentLogo} name={game.opponent} size={26} />
-                      <span className="min-w-0 flex-1 truncate font-medium text-mist-100">{game.opponent}</span>
-                      <span className="score rounded-[3px] bg-ink-950 px-2 py-0.5 text-lg text-mist-50 ring-1 ring-line">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium text-mist-100">{game.opponent}</span>
+                        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-mist-500 sm:hidden">
+                          <span>{game.home ? "vs" : "@"}</span>
+                          <span className="font-display font-bold">{formatShortDate(game.date)}</span>
+                        </span>
+                      </span>
+                      <span className="score shrink-0 rounded-[3px] bg-ink-950 px-2 py-0.5 text-lg text-mist-50 ring-1 ring-line">
                         {game.us}–{game.them}
                       </span>
                     </Link>

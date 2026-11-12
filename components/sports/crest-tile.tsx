@@ -38,7 +38,7 @@ export function CrestTile({
         )}
       </span>
       <span className="min-w-0">
-        <span className="block truncate font-display text-[1.05rem] font-bold leading-tight text-mist-100 group-hover:text-flood-300 sm:whitespace-normal">
+        <span className="block break-words font-display text-[1.05rem] font-bold leading-tight text-mist-100 group-hover:text-flood-300 sm:whitespace-normal">
           {name}
         </span>
         {detail ? <span className="mt-0.5 block text-[0.8125rem] text-mist-500">{detail}</span> : null}

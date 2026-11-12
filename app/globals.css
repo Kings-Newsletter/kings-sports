@@ -78,6 +78,13 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Grid items default to min-width: auto, so a wide table inside one pushes the
+     whole track past the viewport (and body's overflow clip hides it). Zero
+     specificity keeps explicit min-w-* utilities in charge. */
+  :where(.grid) > * {
+    min-width: 0;
+  }
+
   ::selection {
     background-color: var(--color-flood-500);
     color: #fff;

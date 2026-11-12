@@ -38,7 +38,7 @@ export function StatusPill({ fixture }: { fixture: Fixture }) {
     const paused = /^(Intervalo|Fim do)/.test(fixture.clock ?? "");
     return (
       <span
-        className={`inline-flex items-center gap-1.5 rounded-[3px] px-1.5 py-0.5 font-display text-[0.8125rem] font-bold leading-none ${
+        className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[3px] px-1.5 py-0.5 font-display text-[0.8125rem] font-bold leading-none ${
           paused ? "bg-gold-500/15 text-gold-300" : "bg-live-500/15 text-live-400"
         }`}
       >
@@ -49,14 +49,14 @@ export function StatusPill({ fixture }: { fixture: Fixture }) {
   }
   if (fixture.status === "finished") {
     return (
-      <span className="font-display text-[0.875rem] font-semibold text-mist-500">
+      <span className="font-display text-[0.875rem] font-semibold text-mist-500 whitespace-nowrap">
         {fixture.clock ?? "Fim"}
       </span>
     );
   }
   if (fixture.status === "postponed" || fixture.status === "cancelled") {
     return (
-      <span className="font-display text-[0.875rem] font-semibold text-gold-400">
+      <span className="font-display text-[0.875rem] font-semibold text-gold-400 whitespace-nowrap">
         {statusLabel[fixture.status]}
       </span>
     );
@@ -170,7 +170,7 @@ export function FixtureRow({
       </>
     );
     const eventClass =
-      "group relative flex items-center gap-4 py-3 pl-5 pr-4 transition-colors hover:bg-ink-800/60";
+      "group relative flex items-center gap-4 py-3 pl-3 pr-3 transition-colors hover:bg-ink-800/60 sm:pl-5 sm:pr-4";
     return (
       <li>
         {href ? (
@@ -188,31 +188,31 @@ export function FixtureRow({
     <>
       <span className={`status-bar ${barColor[fixture.status]}`} aria-hidden="true" />
 
-      {/* Celular: times empilhados, placar à direita */}
-      <div className="flex items-start gap-3 sm:hidden">
-        <div className="w-14 shrink-0 pt-0.5">
+      {/* Celular: data/hora acima, times com a linha inteira para o nome */}
+      <div className="sm:hidden">
+        <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           {showDate ? (
-            <span className="block font-display text-[0.6875rem] font-bold text-mist-500">
+            <span className="font-display text-[0.6875rem] font-bold uppercase tracking-wide text-mist-500">
               {formatShortDate(fixture.kickoff)}
             </span>
           ) : null}
           {fixture.status === "scheduled" ? (
-            <span className="score text-base text-mist-200">{formatTime(fixture.kickoff)}</span>
+            <span className="score text-[0.9375rem] leading-none text-mist-200">{formatTime(fixture.kickoff)}</span>
           ) : (
             <StatusPill fixture={fixture} />
           )}
         </div>
-        <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5">
           <span className={`flex min-w-0 items-center gap-2 ${awayWins ? loser : "text-mist-100"} ${homeWins ? "font-semibold" : ""}`}>
             <TeamCrest url={fixture.home.crest} name={fixture.home.name} size={22} />
-            <span className="truncate">{fixture.home.name}</span>
+            <span className="min-w-0 break-words leading-tight">{fixture.home.name}</span>
           </span>
           <span className={`score text-xl leading-none ${hasScore ? (awayWins ? loser : "text-mist-50") : "text-mist-600"}`}>
             {hasScore ? fixture.score!.home : ""}
           </span>
           <span className={`flex min-w-0 items-center gap-2 ${homeWins ? loser : "text-mist-100"} ${awayWins ? "font-semibold" : ""}`}>
             <TeamCrest url={fixture.away.crest} name={fixture.away.name} size={22} />
-            <span className="truncate">{fixture.away.name}</span>
+            <span className="min-w-0 break-words leading-tight">{fixture.away.name}</span>
           </span>
           <span className={`score text-xl leading-none ${hasScore ? (homeWins ? loser : "text-mist-50") : "text-mist-600"}`}>
             {hasScore ? fixture.score!.away : ""}
@@ -257,7 +257,7 @@ export function FixtureRow({
     </>
   );
 
-  const rowClass = `group relative block py-3 pl-5 pr-4 transition-colors ${
+  const rowClass = `group relative block py-3 pl-3 pr-3 transition-colors sm:pl-5 sm:pr-4 ${
     fixture.status === "live" ? "bg-live-500/[0.04]" : ""
   } hover:bg-ink-800/60`;
 

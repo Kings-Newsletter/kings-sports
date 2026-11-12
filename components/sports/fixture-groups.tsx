@@ -38,21 +38,21 @@ export function FixtureGroups({
         const isRacing = list[0]?.sport === "automobilismo";
         return (
           <section key={slug} aria-labelledby={`grupo-${slug}`}>
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <h3 id={`grupo-${slug}`} className="flex items-center gap-2.5">
+            <div className="mb-2 flex min-w-0 items-center justify-between gap-3">
+              <h3 id={`grupo-${slug}`} className="flex min-w-0 items-center gap-2.5">
                 <CompetitionLogo slug={slug} size={30} />
-                <Link href={`/competicoes/${slug}`} className="font-display text-lg font-bold text-mist-100 hover:text-flood-300">
+                <Link href={`/competicoes/${slug}`} className="min-w-0 font-display text-lg font-bold leading-tight text-mist-100 hover:text-flood-300">
                   {entry?.name ?? slug}
                 </Link>
                 {live > 0 ? (
-                  <span className="rounded-[3px] bg-live-500/15 px-1.5 py-0.5 font-display text-xs font-bold text-live-400">
+                  <span className="shrink-0 rounded-[3px] bg-live-500/15 px-1.5 py-0.5 font-display text-xs font-bold text-live-400">
                     {live} ao vivo
                   </span>
                 ) : null}
               </h3>
               <Link
                 href={`/competicoes/${slug}`}
-                className="shrink-0 text-xs font-medium text-mist-500 transition-colors hover:text-flood-300"
+                className="-my-2 hidden shrink-0 py-2 text-xs font-medium text-mist-500 transition-colors hover:text-flood-300 sm:block"
               >
                 {isRacing ? "Classificação e etapas" : "Tabela e jogos"}
               </Link>

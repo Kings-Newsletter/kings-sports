@@ -86,7 +86,7 @@ function Timeline({ events, showSubs }: { events: MatchEvent[]; showSubs: boolea
           </span>
         );
         return (
-          <li key={index} className="grid grid-cols-[1fr_3rem_1fr] items-center gap-2 py-1">
+          <li key={index} className="grid grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)] items-center gap-1.5 py-1 sm:grid-cols-[minmax(0,1fr)_3rem_minmax(0,1fr)] sm:gap-2">
             <span className={`flex items-center justify-end gap-2 text-right ${event.side === "home" ? "" : "invisible"}`}>
               {event.side === "home" ? text : null}
               {event.side === "home" ? marker : null}
@@ -138,34 +138,53 @@ function StatBars({ stats }: { stats: MatchStat[] }) {
 }
 
 function Leaders({ leaders, competition }: { leaders: MatchLeader[]; competition: string }) {
-  const person = (p: MatchLeader["home"], align: "left" | "right") =>
+  const person = (p: MatchLeader["home"], align: "left" | "right", className = "") =>
     p ? (
-      <span className={`flex min-w-0 items-center gap-3 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
+      <span
+        className={`flex min-w-0 items-center gap-2 sm:gap-3 ${
+          align === "right" ? "flex-row-reverse text-right" : ""
+        } ${className}`}
+      >
         {p.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.photo} alt="" width={44} height={44} loading="lazy" className="size-11 shrink-0 rounded-full bg-ink-700 object-cover" />
+          <img
+            src={p.photo}
+            alt=""
+            width={44}
+            height={44}
+            loading="lazy"
+            className="size-9 shrink-0 rounded-full bg-ink-700 object-cover sm:size-11"
+          />
         ) : null}
         <span className="min-w-0">
           {p.id ? (
-            <Link href={`/atletas/${competition}/${p.id}`} className="block truncate text-sm font-medium text-mist-100 hover:text-flood-300">
+            <Link
+              href={`/atletas/${competition}/${p.id}`}
+              className="block break-words text-sm font-medium leading-tight text-mist-100 hover:text-flood-300 sm:truncate"
+            >
               {p.name}
             </Link>
           ) : (
-            <span className="block truncate text-sm font-medium text-mist-100">{p.name}</span>
+            <span className="block break-words text-sm font-medium leading-tight text-mist-100 sm:truncate">{p.name}</span>
           )}
           <span className="score text-xl text-mist-50">{p.value}</span>
         </span>
       </span>
     ) : (
-      <span />
+      <span className={className} />
     );
   return (
     <ul className="divide-y divide-line-soft">
       {leaders.map((leader) => (
-        <li key={leader.label} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-3">
-          {person(leader.home, "left")}
-          <span className="text-[0.8125rem] font-medium text-mist-500">{leader.label}</span>
-          {person(leader.away, "right")}
+        <li
+          key={leader.label}
+          className="grid grid-cols-2 gap-x-3 gap-y-2 py-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-3"
+        >
+          <span className="order-first col-span-2 text-center text-[0.8125rem] font-medium text-mist-500 sm:order-2 sm:col-span-1">
+            {leader.label}
+          </span>
+          {person(leader.home, "left", "sm:order-1")}
+          {person(leader.away, "right", "sm:order-3")}
         </li>
       ))}
     </ul>
@@ -186,8 +205,17 @@ function TeamBlock({
 }) {
   const content = (
     <>
-      <TeamCrest url={team.crest} name={team.name} size={88} />
-      <p className={`font-display text-xl font-bold leading-tight sm:text-2xl ${winner ? "text-mist-50" : "text-mist-200"}`}>
+      <span className="sm:hidden">
+        <TeamCrest url={team.crest} name={team.name} size={60} />
+      </span>
+      <span className="hidden sm:block">
+        <TeamCrest url={team.crest} name={team.name} size={88} />
+      </span>
+      <p
+        className={`max-w-full break-words font-display text-base font-bold leading-tight sm:text-2xl ${
+          winner ? "text-mist-50" : "text-mist-200"
+        }`}
+      >
         {team.name}
       </p>
     </>
@@ -249,12 +277,12 @@ export default async function MatchPage({ params }: { params: Params }) {
             {fixture.round ? <span>· {fixture.round}</span> : null}
           </nav>
 
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-10">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-10">
             <TeamBlock team={fixture.home} side="home" winner={homeWins} competition={fixture.competition} />
             <div className="flex flex-col items-center gap-3">
               {hasScore ? (
                 <p
-                  className={`score flex items-center gap-3 text-[clamp(3rem,10vw,5.5rem)] leading-none ${
+                  className={`score flex items-center gap-1.5 text-[clamp(1.875rem,7vw,5.5rem)] leading-none sm:gap-3 ${
                     fixture.status === "live" ? "text-mist-50" : "text-mist-100"
                   }`}
                 >
@@ -319,7 +347,7 @@ export default async function MatchPage({ params }: { params: Params }) {
 
             {home && away ? (
               <Panel title="Escalações">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
                   {[home, away].map((lineup) => (
                     <div key={lineup.side}>
                       <p className="mb-3 flex items-baseline justify-between gap-2">

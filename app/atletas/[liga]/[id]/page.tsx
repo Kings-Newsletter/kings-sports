@@ -55,7 +55,7 @@ export default async function AthletePage({ params }: { params: Params }) {
     <>
       <section className="border-b border-line-soft bg-[radial-gradient(60rem_22rem_at_20%_0%,rgb(37_99_235_/_0.16),transparent_70%)]">
         <Container className="py-8 sm:py-12">
-          <nav className="mb-6 flex items-center gap-2 text-sm text-mist-400">
+          <nav className="mb-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-mist-400">
             <CompetitionLogo slug={liga} size={22} />
             <Link href={liga === "selecoes" ? "/selecoes" : `/competicoes/${liga}`} className="hover:text-flood-300">
               {competition.name}
@@ -75,7 +75,7 @@ export default async function AthletePage({ params }: { params: Params }) {
           </nav>
 
           <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
-            <div className="relative">
+            <div className="relative w-fit shrink-0 self-start rounded-full sm:self-auto">
               <AthletePhoto photo={commons?.src ?? athlete.photo} crest={athlete.team?.logo} name={athlete.name} size={128} />
               {athlete.flag ? (
                 // eslint-disable-next-line @next/next/no-img-element

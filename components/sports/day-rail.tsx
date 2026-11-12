@@ -34,7 +34,7 @@ export function DayRail({
     <section
       id={id}
       aria-label={label}
-      className="grid scroll-mt-40 grid-cols-[3.25rem_minmax(0,1fr)] gap-x-3 sm:grid-cols-[5rem_minmax(0,1fr)] sm:gap-x-6"
+      className="grid scroll-mt-40 grid-cols-[3rem_minmax(0,1fr)] gap-x-2 sm:grid-cols-[5rem_minmax(0,1fr)] sm:gap-x-6"
     >
       <h2 className={`sticky ${stickyTop} self-start pt-1 text-right`}>
         <span className={`score block text-[2rem] leading-[0.85] sm:text-[3rem] ${isToday ? "text-flood-300" : "text-mist-100"}`}>
@@ -46,7 +46,7 @@ export function DayRail({
         <span className="block text-[0.75rem] text-mist-600">{month.format(date).replace(".", "")}</span>
         {typeof count === "number" ? <span className="sr-only">, {count} {count === 1 ? "evento" : "eventos"}</span> : null}
       </h2>
-      <div className={`min-w-0 border-l pb-10 pl-3 sm:pl-6 ${isToday ? "border-flood-400" : "border-line"}`}>{children}</div>
+      <div className={`min-w-0 border-l pb-10 pl-2.5 sm:pl-6 ${isToday ? "border-flood-400" : "border-line"}`}>{children}</div>
     </section>
   );
 }
