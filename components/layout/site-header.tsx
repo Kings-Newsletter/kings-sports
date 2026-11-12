@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { Container, KingsLogo } from "@/components/ui/icons";
+import { LinkPending } from "@/components/ui/link-pending";
 import { NavIcon } from "@/components/ui/nav-icon";
 import { allNav, primaryNav, secondaryNav, site } from "@/lib/site";
 
@@ -33,6 +34,7 @@ export function SiteHeader() {
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="group flex min-w-0 items-center gap-2.5 leading-none" aria-label={`${site.name}, página inicial`}>
             <KingsLogo className="size-9 shrink-0" />
+            <LinkPending />
             <span className="flex min-w-0 flex-col">
               <span className="truncate font-display text-[1.5rem] font-extrabold uppercase leading-none tracking-wide text-mist-50">
                 King&apos;s Sports
@@ -48,6 +50,7 @@ export function SiteHeader() {
             >
               <span className="inline-flex size-1.5 rounded-full bg-live-400" aria-hidden="true" />
               Ao vivo
+              <LinkPending />
             </Link>
 
             <details ref={menu} className="group xl:hidden">
@@ -71,7 +74,11 @@ export function SiteHeader() {
                               active ? "bg-flood-500/15 text-flood-300" : "text-mist-200 hover:bg-ink-800"
                             }`}
                           >
-                            <NavIcon href={item.href} className="size-5 text-flood-400" />
+                            <span className="grid size-5 place-items-center text-flood-400">
+                              <LinkPending>
+                                <NavIcon href={item.href} className="size-5" />
+                              </LinkPending>
+                            </span>
                             <span className="font-medium">{item.label}</span>
                             {item.description ? (
                               <span className="ml-auto max-w-[50%] text-right text-xs text-mist-500">{item.description}</span>
@@ -104,7 +111,11 @@ export function SiteHeader() {
                         active ? "text-mist-50" : "text-mist-300 hover:text-mist-50"
                       }`}
                     >
-                      <NavIcon href={item.href} className={`size-4 ${active ? "text-flood-400" : "text-mist-500"}`} />
+                      <span className={`grid size-4 place-items-center ${active ? "text-flood-400" : "text-mist-500"}`}>
+                        <LinkPending>
+                          <NavIcon href={item.href} className="size-4" />
+                        </LinkPending>
+                      </span>
                       {item.label}
                       {active ? <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t bg-flood-500" /> : null}
                     </Link>
@@ -121,6 +132,7 @@ export function SiteHeader() {
                     className={`whitespace-nowrap transition-colors hover:text-flood-300 ${isActive(item.href, pathname) ? "text-flood-300" : ""}`}
                   >
                     {item.label}
+                    <LinkPending />
                   </Link>
                 </li>
               ))}

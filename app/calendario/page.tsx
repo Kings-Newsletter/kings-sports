@@ -6,6 +6,7 @@ import { DayRail } from "@/components/sports/day-rail";
 import { FixtureGroups } from "@/components/sports/fixture-groups";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Container } from "@/components/ui/icons";
+import { LinkPending } from "@/components/ui/link-pending";
 import { PageHeader } from "@/components/ui/page-header";
 import { SportIcon } from "@/components/ui/sport-icon";
 import { catalog } from "@/lib/catalog";
@@ -119,6 +120,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
       {/* Navegação por mês */}
       <div className="sticky top-[4.05rem] z-30 xl:top-[7.2rem] -mx-4 flex items-center justify-between gap-2 border-b border-line-soft bg-ink-950/90 px-4 py-3 backdrop-blur sm:mx-0 sm:gap-3 sm:px-0">
         <Link href={href({ mes: shiftMonth(month, -1) })} aria-label={`Mês anterior: ${monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
+          <LinkPending />
           <span aria-hidden="true" className="sm:hidden">‹</span>
           <span className="hidden sm:inline">‹ {monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}</span>
         </Link>
@@ -133,12 +135,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
                 {", "}
                 <Link href={href({ mes: today.slice(0, 7) })} className="text-flood-300 underline underline-offset-2">
                   voltar ao mês atual
+                  <LinkPending />
                 </Link>
               </>
             ) : null}
           </p>
         </div>
         <Link href={href({ mes: shiftMonth(month, 1) })} aria-label={`Próximo mês: ${monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
+          <LinkPending />
           <span aria-hidden="true" className="sm:hidden">›</span>
           <span className="hidden sm:inline">{monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))} ›</span>
         </Link>

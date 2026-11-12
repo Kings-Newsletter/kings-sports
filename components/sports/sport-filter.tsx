@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { sports } from "@/lib/sports";
+import { LinkPending } from "@/components/ui/link-pending";
 import { SportIcon } from "@/components/ui/sport-icon";
 
 /**
@@ -46,7 +47,9 @@ export function SportFilter({
                     : "border-line bg-ink-850/60 shadow-card text-mist-400 hover:border-mist-600 hover:text-mist-100"
                 }`}
               >
-                <SportIcon sport={sport.slug ?? "todos"} className="size-3.5" />
+                <LinkPending>
+                  <SportIcon sport={sport.slug ?? "todos"} className="size-3.5" />
+                </LinkPending>
                 {sport.name}
               </Link>
             </li>

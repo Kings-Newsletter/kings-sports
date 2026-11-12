@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 import { catalog, toCompetition } from "@/lib/catalog";
-import { localDayBounds, toLocalYmd } from "@/lib/dates";
+import { TIME_ZONE, isValidYmd, localDayBounds, toLocalYmd } from "@/lib/dates";
 import {
   type ArticleDoc,
   articleFromDoc,
@@ -101,15 +101,25 @@ export type ArticleQuery = {
   series?: string;
   limit?: number;
   excludeSlug?: string;
+  /** Edição: só as matérias publicadas neste dia de Brasília ("YYYY-MM-DD"). */
+  day?: string;
 };
 
-function articleSortPipeline(filter: Record<string, unknown>, limit?: number) {
+/** Uma edição de notícias é um dia de Brasília com matérias publicadas. */
+export type ArticleEdition = { day: string; count: number };
+
+function articleSortPipeline(filter: Record<string, unknown>, limit?: number, day?: string) {
   const pipeline: Record<string, unknown>[] = [
     { $match: filter },
     { $addFields: { publishedAtSort: { $toDate: "$publishedAt" } } },
-    { $sort: { publishedAtSort: -1 } },
-    { $unset: "publishedAtSort" },
   ];
+  // publishedAt pode estar gravado como Date ou como texto ISO com fuso; o recorte
+  // do dia é feito sobre a data já convertida.
+  if (day) {
+    const { from, to } = localDayBounds(day);
+    pipeline.push({ $match: { publishedAtSort: { $gte: from, $lt: to } } });
+  }
+  pipeline.push({ $sort: { publishedAtSort: -1 } }, { $unset: "publishedAtSort" });
   if (limit && limit > 0) pipeline.push({ $limit: limit });
   return pipeline;
 }
@@ -131,9 +141,43 @@ export async function getArticles(query: ArticleQuery = {}): Promise<Article[]> 
 
       const cursor = collections(db)
         .articles.aggregate<ArticleDoc & { type?: string }>(
-          articleSortPipeline(filter, query.limit),
+          articleSortPipeline(filter, query.limit, query.day),
         );
       return (await cursor.toArray()).map(articleFromDoc);
+    },
+    async () => [],
+  );
+}
+
+/** Edições disponíveis (dias com matérias), da mais recente para a mais antiga. */
+export async function getArticleEditions(
+  query: Pick<ArticleQuery, "sport" | "competition"> = {},
+): Promise<ArticleEdition[]> {
+  return fromDb(
+    "article editions",
+    async () => {
+      const filter: Record<string, unknown> = {};
+      if (query.sport) filter.sport = query.sport;
+      if (query.competition) filter.competition = query.competition;
+      const rows = await collections(await getDb())
+        .articles.aggregate<{ _id: string; count: number }>([
+          { $match: filter },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  date: { $toDate: "$publishedAt" },
+                  format: "%Y-%m-%d",
+                  timezone: TIME_ZONE,
+                },
+              },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: -1 } },
+        ])
+        .toArray();
+      return rows.filter((row) => isValidYmd(row._id)).map((row) => ({ day: row._id, count: row.count }));
     },
     async () => [],
   );

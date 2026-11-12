@@ -78,7 +78,9 @@ export function Container({
   className?: string;
 }) {
   return (
-    <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 ${className}`}>
+    // Largura própria (ex.: coluna de leitura max-w-3xl) substitui a padrão: as duas
+    // juntas brigariam pela ordem do CSS e a max-w-7xl venceria.
+    <div className={`mx-auto w-full ${/(^|\s)max-w-/.test(className) ? "" : "max-w-7xl"} px-4 sm:px-6 lg:px-10 ${className}`}>
       {children}
     </div>
   );
