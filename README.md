@@ -218,7 +218,7 @@ GitHub Actions runs the type check and production build on Node.js 20 and 22 on 
 
 ## Deployment
 
-The project is ready for [Vercel](https://vercel.com/). Add `NEXT_PUBLIC_SITE_URL`, `MONGODB_URI`, and `MONGODB_DB` under **Settings → Environment Variables** before deploying. The portal has no cron jobs: data collection runs in the worker. Serving the portal at `kingsnewsletter.com/sports` requires a rewrite in the project behind `kingsnewsletter.com`.
+The project is ready for [Vercel](https://vercel.com/). Add `NEXT_PUBLIC_SITE_URL`, `MONGODB_URI`, and `MONGODB_DB` under **Settings → Environment Variables** before deploying. The portal has no cron jobs: data collection runs in the worker. Serving the portal at `kingsnewsletter.com/sports` requires a rewrite in the project behind `kingsnewsletter.com`. The step-by-step guide (Vercel project, environment variables, rewrite, and Cloudflare settings) is in [docs/deploy.md](./docs/deploy.md) (Portuguese).
 
 ## Contributing
 
