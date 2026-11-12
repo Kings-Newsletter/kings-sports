@@ -87,7 +87,7 @@ Nenhum valor é inventado. Quando uma fonte não responde, a página mostra um e
 | Estilo | Tailwind CSS 4 com tokens de design, fontes auto-hospedadas via `next/font` (Barlow, Barlow Condensed) |
 | Ícones | Lucide |
 | Servidor | Server components do Next.js; o portal só lê do banco |
-| Coleta de dados | Roda no worker da King's Newsletter (`kings-newsletter-worker`), fora da Vercel |
+| Coleta de dados | Roda no King's Worker (`kings-worker`), fora da Vercel |
 | Dados | MongoDB (driver oficial para Node.js), coleção única `sports` |
 | Qualidade | TypeScript, GitHub Actions |
 
@@ -174,7 +174,7 @@ Variáveis com o prefixo `NEXT_PUBLIC_` vão no JavaScript publicado. As do Mong
 
 ## Coleta de dados
 
-As páginas só leem do banco, então os limites dos provedores nunca dependem do número de visitas. Toda a coleta roda no worker da King's Newsletter (`kings-newsletter-worker`, em `src/sports`), um serviço que fica no ar 24 horas por dia. Assim o portal não dispara crons nem execuções serverless na Vercel.
+As páginas só leem do banco, então os limites dos provedores nunca dependem do número de visitas. Toda a coleta roda no King's Worker (`kings-worker`, em `src/sports`), um serviço que fica no ar 24 horas por dia. Assim o portal não dispara crons nem execuções serverless na Vercel.
 
 | Job | Quando roda | O que faz |
 | --- | --- | --- |

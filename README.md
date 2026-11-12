@@ -87,7 +87,7 @@ No value is invented. When a source does not respond, the page shows an empty st
 | Styling | Tailwind CSS 4 with design tokens, self-hosted fonts via `next/font` (Barlow, Barlow Condensed) |
 | Icons | Lucide |
 | Server | Next.js server components; the portal only reads from the database |
-| Data collection | Runs in the King's Newsletter worker (`kings-newsletter-worker`), outside Vercel |
+| Data collection | Runs in the King's Worker (`kings-worker`), outside Vercel |
 | Data | MongoDB (official Node.js driver), single `sports` collection |
 | Quality | TypeScript, GitHub Actions |
 
@@ -174,7 +174,7 @@ Variables prefixed with `NEXT_PUBLIC_` are embedded in the published JavaScript.
 
 ## Data collection
 
-Pages only read from the database, so provider limits never depend on traffic. All collection runs in the King's Newsletter worker (`kings-newsletter-worker`, under `src/sports`), a service that stays online 24/7, so the portal triggers no cron jobs or serverless invocations on Vercel.
+Pages only read from the database, so provider limits never depend on traffic. All collection runs in the King's Worker (`kings-worker`, under `src/sports`), a service that stays online 24/7, so the portal triggers no cron jobs or serverless invocations on Vercel.
 
 | Job | Schedule | What it does |
 | --- | --- | --- |

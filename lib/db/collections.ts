@@ -23,7 +23,7 @@ import type { Article, Fixture, HistoricalMatch, Standings, StatBoard } from "@/
  * O portal nunca lê nem escreve nas coleções da Newsletter.
  *
  * Quem escreve aqui é a coleta, que roda no worker da King's Newsletter
- * (kings-newsletter-worker, src/sports), e os importadores de scripts/. O
+ * (kings-worker, src/sports), e os importadores de scripts/. O
  * worker também cria os índices.
  */
 

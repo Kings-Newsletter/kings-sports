@@ -2,7 +2,7 @@
  * Contratos de dados do portal.
  *
  * A interface depende destes tipos, nunca de uma API específica.
- * Dados esportivos vêm do MongoDB, alimentado pela coleta do worker (kings-newsletter-worker).
+ * Dados esportivos vêm do MongoDB, alimentado pela coleta do worker (kings-worker).
  * Notícias também vêm do MongoDB; os demais conteúdos editoriais vêm de /content.
  * Ver lib/data/index.ts.
  */
