@@ -10,7 +10,7 @@ import { LinkPending } from "@/components/ui/link-pending";
 import { PageHeader } from "@/components/ui/page-header";
 import { SportIcon } from "@/components/ui/sport-icon";
 import { catalog } from "@/lib/catalog";
-import { getFixtures } from "@/lib/data";
+import { getCalendarFixtures } from "@/lib/data";
 import { localDayBounds, toLocalYmd } from "@/lib/dates";
 import { buildMetadata } from "@/lib/seo";
 import { getSport, sports } from "@/lib/sports";
@@ -52,7 +52,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
 
   const from = localDayBounds(`${month}-01`).from;
   const to = localDayBounds(`${shiftMonth(month, 1)}-01`).from;
-  const fixtures = await getFixtures({ from, to, sport, competition: competition?.slug });
+  const fixtures = await getCalendarFixtures({ from, to, sport, competition: competition?.slug });
 
   const byDay = new Map<string, Fixture[]>();
   for (const fixture of fixtures) {
@@ -88,13 +88,15 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
         description="A temporada inteira, mês a mês: jogos, corridas e resultados de todas as competições acompanhadas. Horários de Brasília."
       >
         <div className="space-y-3">
+          {/* Sem prefetch: cada link de filtro e de mês é uma renderização dinâmica
+              com consulta ao banco, e o prefetch disparava todos de uma vez. */}
           <nav aria-label="Esporte" className="no-scrollbar flex gap-2 overflow-x-auto">
-            <Link href={href({ esporte: null, competicao: null })} className={chip(!sport)}>
+            <Link prefetch={false} href={href({ esporte: null, competicao: null })} className={chip(!sport)}>
               <SportIcon sport="todos" className="size-4" />
               Todos
             </Link>
             {covered.map((item) => (
-              <Link key={item.slug} href={href({ esporte: item.slug, competicao: null })} className={chip(sport === item.slug && !competition)}>
+              <Link key={item.slug} prefetch={false} href={href({ esporte: item.slug, competicao: null })} className={chip(sport === item.slug && !competition)}>
                 <SportIcon sport={item.slug} className="size-4" />
                 {item.name}
               </Link>
@@ -105,6 +107,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
               {competitionsOfSport.map((entry) => (
                 <Link
                   key={entry.slug}
+                  prefetch={false}
                   href={href({ competicao: competition?.slug === entry.slug ? null : entry.slug, esporte: entry.sport })}
                   className={chip(competition?.slug === entry.slug)}
                 >
@@ -119,7 +122,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
 
       {/* Navegação por mês */}
       <div className="sticky top-[4.05rem] z-30 xl:top-[7.2rem] -mx-4 flex items-center justify-between gap-2 border-b border-line-soft bg-ink-950/90 px-4 py-3 backdrop-blur sm:mx-0 sm:gap-3 sm:px-0">
-        <Link href={href({ mes: shiftMonth(month, -1) })} aria-label={`Mês anterior: ${monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
+        <Link prefetch={false} href={href({ mes: shiftMonth(month, -1) })} aria-label={`Mês anterior: ${monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
           <LinkPending />
           <span aria-hidden="true" className="sm:hidden">‹</span>
           <span className="hidden sm:inline">‹ {monthName.format(new Date(`${shiftMonth(month, -1)}-15T12:00:00Z`))}</span>
@@ -133,7 +136,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             {month !== today.slice(0, 7) ? (
               <>
                 {", "}
-                <Link href={href({ mes: today.slice(0, 7) })} className="text-flood-300 underline underline-offset-2">
+                <Link prefetch={false} href={href({ mes: today.slice(0, 7) })} className="text-flood-300 underline underline-offset-2">
                   voltar ao mês atual
                   <LinkPending />
                 </Link>
@@ -141,7 +144,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             ) : null}
           </p>
         </div>
-        <Link href={href({ mes: shiftMonth(month, 1) })} aria-label={`Próximo mês: ${monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
+        <Link prefetch={false} href={href({ mes: shiftMonth(month, 1) })} aria-label={`Próximo mês: ${monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))}`} className="shrink-0 rounded-[4px] border border-line px-2.5 py-1.5 text-sm text-mist-300 hover:text-mist-50 sm:px-3">
           <LinkPending />
           <span aria-hidden="true" className="sm:hidden">›</span>
           <span className="hidden sm:inline">{monthName.format(new Date(`${shiftMonth(month, 1)}-15T12:00:00Z`))} ›</span>

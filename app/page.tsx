@@ -7,6 +7,7 @@ import { DayGuide, type DayTab } from "@/components/sports/day-guide";
 import { StandingsTable } from "@/components/sports/standings-table";
 import { CrestTile } from "@/components/sports/crest-tile";
 import { HomeRail } from "@/components/sports/home-rail";
+import { LiveRefresh } from "@/components/sports/live-refresh";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Container } from "@/components/ui/icons";
 import { NavIcon } from "@/components/ui/nav-icon";
@@ -17,6 +18,7 @@ import {
   getFixturesForDay,
   getLastMeetings,
   getStandings,
+  needsLiveRefresh,
 } from "@/lib/data";
 import { addDays, toLocalYmd } from "@/lib/dates";
 import { getDrivers, getFeaturedPlayers, getNationalTeams } from "@/lib/directory";
@@ -131,6 +133,8 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
 
   return (
     <>
+      {/* "Hoje" é a única aba com jogo que muda de placar. */}
+      <LiveRefresh active={needsLiveRefresh(tabs[1]!.ymd === activeTab.ymd ? dayFixtures : [])} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}

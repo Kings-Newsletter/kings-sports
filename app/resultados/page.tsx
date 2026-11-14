@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { DayRail } from "@/components/sports/day-rail";
 import { FixtureGroups } from "@/components/sports/fixture-groups";
+import { LiveRefresh } from "@/components/sports/live-refresh";
 import { SportFilter } from "@/components/sports/sport-filter";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Container, LiveDot } from "@/components/ui/icons";
@@ -53,6 +54,7 @@ export default async function ResultsPage({ searchParams }: { searchParams: Sear
 
   return (
     <Container>
+      <LiveRefresh active={live.length > 0} />
       <PageHeader
         section="/resultados"
         title={current ? `Resultados de ${current.name}` : "Resultados"}
