@@ -6,8 +6,11 @@ import { useEffect } from "react";
 /**
  * Recarrega os dados do servidor a cada `intervalMs` enquanto houver jogo ao
  * vivo — sem recarregar a página nem perder a rolagem. Pausa com a aba oculta.
+ *
+ * Cada atualização é uma renderização completa no servidor: use só nas páginas
+ * com placar ao vivo, nunca no layout.
  */
-export function LiveRefresh({ active, intervalMs = 15_000 }: { active: boolean; intervalMs?: number }) {
+export function LiveRefresh({ active, intervalMs = 60_000 }: { active: boolean; intervalMs?: number }) {
   const router = useRouter();
 
   useEffect(() => {

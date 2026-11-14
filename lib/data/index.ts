@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -42,6 +43,20 @@ import type {
  */
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
+
+/**
+ * Cache entre requisições (Data Cache da Vercel). O `cache()` do React só
+ * vale dentro de uma renderização; sem isto, cada visita relia o banco.
+ * O resultado precisa ser serializável em JSON (nada de Map ou Date).
+ */
+// Jogos ao vivo e próximos (faixa do layout). Não pode ficar abaixo do
+// `revalidate = 60` do layout: o menor tempo de cache vira o tempo de ISR de
+// todas as páginas estáticas, que passariam a se regenerar com mais frequência.
+const LIVE_TTL = 60;
+const REFERENCE_TTL = 300; // escudos, classificações e estatísticas
+const HISTORY_TTL = 6 * 60 * 60; // histórico importado raramente muda
+const CALENDAR_TTL = 300; // calendário do mês atual e dos próximos
+const CALENDAR_PAST_TTL = 6 * 60 * 60; // meses que já terminaram
 
 async function readCollection<T>(file: string): Promise<T[]> {
   try {
@@ -248,50 +263,55 @@ export type FixtureQuery = {
   order?: "asc" | "desc";
 };
 
-async function queryFixtures(query: FixtureQuery): Promise<Fixture[]> {
-  const statuses = query.status
-    ? Array.isArray(query.status)
-      ? query.status
-      : [query.status]
-    : undefined;
-  const direction = query.order === "desc" ? -1 : 1;
+function fixtureStatuses(query: FixtureQuery): FixtureStatus[] | undefined {
+  return query.status ? (Array.isArray(query.status) ? query.status : [query.status]) : undefined;
+}
 
+async function fixturesFromDb(query: FixtureQuery): Promise<Fixture[]> {
+  const statuses = fixtureStatuses(query);
+  const direction = query.order === "desc" ? -1 : 1;
+  const db = await getDb();
+  const filter: Record<string, unknown> = {};
+  if (query.sport) filter.sport = query.sport;
+  if (query.competition) filter.competition = query.competition;
+  if (statuses) filter.status = { $in: statuses };
+  if (query.from || query.to) {
+    filter.kickoff = {
+      ...(query.from ? { $gte: query.from } : {}),
+      ...(query.to ? { $lt: query.to } : {}),
+    };
+  }
+  const cursor = collections(db)
+    .fixtures.find(filter)
+    .sort({ kickoff: direction });
+  if (query.limit) cursor.limit(query.limit);
+  return (await cursor.toArray()).map(fixtureFromDoc);
+}
+
+async function fixturesFromJson(query: FixtureQuery): Promise<Fixture[]> {
+  const statuses = fixtureStatuses(query);
+  const direction = query.order === "desc" ? -1 : 1;
+  const all = await loadJsonFixtures();
+  const filtered = all.filter((fixture) => {
+    if (query.sport && fixture.sport !== query.sport) return false;
+    if (query.competition && fixture.competition !== query.competition) return false;
+    if (statuses && !statuses.includes(fixture.status)) return false;
+    const time = new Date(fixture.kickoff).getTime();
+    if (query.from && time < query.from.getTime()) return false;
+    if (query.to && time >= query.to.getTime()) return false;
+    return true;
+  });
+  filtered.sort(
+    (a, b) => direction * (new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()),
+  );
+  return query.limit ? filtered.slice(0, query.limit) : filtered;
+}
+
+function queryFixtures(query: FixtureQuery): Promise<Fixture[]> {
   return fromDb(
     "fixtures",
-    async () => {
-      const db = await getDb();
-      const filter: Record<string, unknown> = {};
-      if (query.sport) filter.sport = query.sport;
-      if (query.competition) filter.competition = query.competition;
-      if (statuses) filter.status = { $in: statuses };
-      if (query.from || query.to) {
-        filter.kickoff = {
-          ...(query.from ? { $gte: query.from } : {}),
-          ...(query.to ? { $lt: query.to } : {}),
-        };
-      }
-      const cursor = collections(db)
-        .fixtures.find(filter)
-        .sort({ kickoff: direction });
-      if (query.limit) cursor.limit(query.limit);
-      return (await cursor.toArray()).map(fixtureFromDoc);
-    },
-    async () => {
-      const all = await loadJsonFixtures();
-      const filtered = all.filter((fixture) => {
-        if (query.sport && fixture.sport !== query.sport) return false;
-        if (query.competition && fixture.competition !== query.competition) return false;
-        if (statuses && !statuses.includes(fixture.status)) return false;
-        const time = new Date(fixture.kickoff).getTime();
-        if (query.from && time < query.from.getTime()) return false;
-        if (query.to && time >= query.to.getTime()) return false;
-        return true;
-      });
-      filtered.sort(
-        (a, b) => direction * (new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()),
-      );
-      return query.limit ? filtered.slice(0, query.limit) : filtered;
-    },
+    () => fixturesFromDb(query),
+    () => fixturesFromJson(query),
   );
 }
 
@@ -329,17 +349,18 @@ function withEventStatus(fixtures: Fixture[]): Fixture[] {
 }
 
 /** Escudos já coletados (TheSportsDB), por "<esporte>:<nome normalizado>". */
+const loadCrestEntries = unstable_cache(
+  async (): Promise<[string, string][]> => {
+    const db = await getDb();
+    const docs = await collections(db).crests.find({ url: { $ne: null } }).toArray();
+    return docs.map((doc): [string, string] => [doc._id.replace(/^crest:/, ""), doc.url!]);
+  },
+  ["data:crests"],
+  { revalidate: REFERENCE_TTL },
+);
+
 const loadCrests = cache(
-  (): Promise<Map<string, string>> =>
-    fromDb(
-      "crests",
-      async () => {
-        const db = await getDb();
-        const docs = await collections(db).crests.find({ url: { $ne: null } }).toArray();
-        return new Map(docs.map((doc) => [doc._id.replace(/^crest:/, ""), doc.url!]));
-      },
-      async () => new Map<string, string>(),
-    ),
+  async () => new Map(await fromDb("crests", loadCrestEntries, async () => [])),
 );
 
 function crestKey(sport: string, name: string) {
@@ -365,7 +386,12 @@ export async function getFixtures(query: FixtureQuery = {}): Promise<Fixture[]> 
   return withCrests(await withBroadcasts(withEventStatus(await queryFixtures(query))));
 }
 
-export async function getLiveFixtures(): Promise<Fixture[]> {
+/** Jogos ao vivo agora. Compartilhado entre visitas por até 60 s. */
+export const getLiveFixtures = unstable_cache(loadLiveFixtures, ["data:live-fixtures"], {
+  revalidate: LIVE_TTL,
+});
+
+async function loadLiveFixtures(): Promise<Fixture[]> {
   // Um jogo "ao vivo" há mais de 6 horas é dado parado, não jogo em andamento.
   // Sessões de F1 podem estar marcadas como agendadas no banco por alguns
   // minutos; o status é recalculado pelo horário de início e fim.
@@ -378,8 +404,15 @@ export async function getLiveFixtures(): Promise<Fixture[]> {
   return fixtures.filter((fixture) => fixture.status === "live");
 }
 
-/** Próximos jogos a partir de agora (nunca inventa: se não houver, retorna vazio). */
-export async function getUpcomingFixtures(limit = 6, sport?: string): Promise<Fixture[]> {
+/**
+ * Próximos jogos a partir de agora (nunca inventa: se não houver, retorna vazio).
+ * Compartilhado entre visitas por até 60 s; os argumentos entram na chave.
+ */
+export const getUpcomingFixtures = unstable_cache(loadUpcomingFixtures, ["data:upcoming-fixtures"], {
+  revalidate: LIVE_TTL,
+});
+
+async function loadUpcomingFixtures(limit = 6, sport?: string): Promise<Fixture[]> {
   const now = Date.now();
   const fixtures = await getFixtures({
     sport,
@@ -393,9 +426,56 @@ export async function getUpcomingFixtures(limit = 6, sport?: string): Promise<Fi
     .slice(0, limit);
 }
 
+/**
+ * Se a página deve se atualizar sozinha: há jogo ao vivo, ou um começa nos
+ * próximos 15 minutos (ou começou há pouco e o status ainda não virou).
+ */
+export function needsLiveRefresh(fixtures: Fixture[]): boolean {
+  const now = Date.now();
+  return fixtures.some((fixture) => {
+    if (fixture.status === "live") return true;
+    if (fixture.status !== "scheduled") return false;
+    const untilKickoff = new Date(fixture.kickoff).getTime() - now;
+    return untilKickoff < 15 * 60 * 1000 && untilKickoff > -30 * 60 * 1000;
+  });
+}
+
 export async function getRecentResults(limit = 6, sport?: string): Promise<Fixture[]> {
   return getFixtures({ sport, status: "finished", order: "desc", limit });
 }
+
+/**
+ * Calendário: partidas de um intervalo (um mês), compartilhadas entre visitas.
+ * Só a leitura do banco entra no cache, por intervalo + esporte + competição;
+ * o status de sessões (F1), os escudos e as transmissões são aplicados depois,
+ * na hora. Meses encerrados mudam pouco e ficam guardados por mais tempo.
+ */
+export async function getCalendarFixtures(query: {
+  from: Date;
+  to: Date;
+  sport?: string;
+  competition?: string;
+}): Promise<Fixture[]> {
+  const read = query.to.getTime() < Date.now() ? calendarPastFromDb : calendarFromDb;
+  const fixtures = await fromDb(
+    "calendar",
+    () => read(query.from.toISOString(), query.to.toISOString(), query.sport, query.competition),
+    () => fixturesFromJson(query),
+  );
+  return withCrests(await withBroadcasts(withEventStatus(fixtures)));
+}
+
+function calendarRange(from: string, to: string, sport?: string, competition?: string) {
+  return fixturesFromDb({ from: new Date(from), to: new Date(to), sport, competition });
+}
+
+const calendarFromDb = unstable_cache(calendarRange, ["data:calendar"], {
+  revalidate: CALENDAR_TTL,
+});
+
+const calendarPastFromDb = unstable_cache(calendarRange, ["data:calendar-past"], {
+  revalidate: CALENDAR_PAST_TTL,
+});
 
 /** Todas as partidas e eventos de um dia de Brasília. */
 export async function getFixturesForDay(ymd: string, sport?: string): Promise<Fixture[]> {
@@ -421,18 +501,17 @@ export async function getFixtureById(id: string): Promise<Fixture | null> {
 
 /* ---------------------------- Classificações ----------------------------- */
 
-const loadStandings = cache(
-  (): Promise<Standings[]> =>
-    fromDb(
-      "standings",
-      async () => {
-        const db = await getDb();
-        const docs = await collections(db).standings.find({}).toArray();
-        return docs.map(standingsFromDoc);
-      },
-      loadJsonStandings,
-    ),
+const loadStandingsFromDb = unstable_cache(
+  async (): Promise<Standings[]> => {
+    const db = await getDb();
+    const docs = await collections(db).standings.find({}).toArray();
+    return docs.map(standingsFromDoc);
+  },
+  ["data:standings"],
+  { revalidate: REFERENCE_TTL },
 );
+
+const loadStandings = cache(() => fromDb("standings", loadStandingsFromDb, loadJsonStandings));
 
 function priorityOf(slug: string): number {
   return catalog.find((entry) => entry.slug === slug)?.priority ?? 999;
@@ -468,22 +547,21 @@ export async function getStandingsFor(slug: string): Promise<Standings | null> {
 
 /* ----------------------------- Estatísticas ------------------------------ */
 
-const loadBoards = cache(
-  (): Promise<StatBoard[]> =>
-    fromDb(
-      "stats",
-      async () => {
-        const db = await getDb();
-        const docs = await collections(db).stats.find({}).toArray();
-        return docs.map((doc) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _id, updatedAt, type, ...rest } = doc as typeof doc & { type?: string };
-          return { ...rest, updatedAt: updatedAt.toISOString() };
-        });
-      },
-      loadStatBoards,
-    ),
+const loadBoardsFromDb = unstable_cache(
+  async (): Promise<StatBoard[]> => {
+    const db = await getDb();
+    const docs = await collections(db).stats.find({}).toArray();
+    return docs.map((doc) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _id, updatedAt, type, ...rest } = doc as typeof doc & { type?: string };
+      return { ...rest, updatedAt: updatedAt.toISOString() };
+    });
+  },
+  ["data:stats"],
+  { revalidate: REFERENCE_TTL },
 );
+
+const loadBoards = cache(() => fromDb("stats", loadBoardsFromDb, loadStatBoards));
 
 export async function getStatBoards(query: { competition?: string; sport?: string } = {}) {
   const boards = [...(await loadBoards())].sort(
@@ -527,9 +605,19 @@ export async function getDailyBriefs(ymd: string): Promise<DailyBrief[]> {
 export async function getLastMeetings(
   pairs: { home: string; away: string }[],
 ): Promise<Map<string, HistoricalMatch>> {
-  const result = new Map<string, HistoricalMatch>();
-  if (!isDbConfigured() || pairs.length === 0) return result;
+  if (!isDbConfigured() || pairs.length === 0) return new Map();
   try {
+    return new Map(await loadLastMeetings(pairs));
+  } catch (error) {
+    // Falha não entra no cache: a próxima visita tenta de novo.
+    console.error("[data] Falha ao ler histórico:", error);
+    return new Map();
+  }
+}
+
+/** Compartilhado entre visitas; os pares de times entram na chave do cache. */
+const loadLastMeetings = unstable_cache(
+  async (pairs: { home: string; away: string }[]): Promise<[string, HistoricalMatch][]> => {
     const db = await getDb();
     const names = [...new Set(pairs.flatMap((pair) => [normalizeTeam(pair.home), normalizeTeam(pair.away)]))];
     const docs = await collections(db)
@@ -537,6 +625,7 @@ export async function getLastMeetings(
       .sort({ date: -1 })
       .limit(2000)
       .toArray();
+    const result: [string, HistoricalMatch][] = [];
     for (const pair of pairs) {
       const match = docs.find(
         (doc) =>
@@ -546,11 +635,11 @@ export async function getLastMeetings(
       if (match) {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { _id, homeKey, awayKey, type, ...rest } = match as typeof match & { type?: string };
-        result.set(`${pair.home}|${pair.away}`, rest);
+        result.push([`${pair.home}|${pair.away}`, rest]);
       }
     }
-  } catch (error) {
-    console.error("[data] Falha ao ler histórico:", error);
-  }
-  return result;
-}
+    return result;
+  },
+  ["data:last-meetings"],
+  { revalidate: HISTORY_TTL },
+);

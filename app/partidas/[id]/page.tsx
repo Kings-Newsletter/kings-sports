@@ -3,12 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { StatusPill } from "@/components/sports/fixture-row";
+import { LiveRefresh } from "@/components/sports/live-refresh";
 import { TeamCrest } from "@/components/sports/team-crest";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Container } from "@/components/ui/icons";
 import { CompetitionLogo } from "@/components/sports/competition-logo";
 import { getCatalogEntry } from "@/lib/catalog";
-import { getFixtureById } from "@/lib/data";
+import { getFixtureById, needsLiveRefresh } from "@/lib/data";
 import { formatDate, formatTime, formatWeekday } from "@/lib/format";
 import { getMatchDetail, type MatchEvent, type MatchLeader, type MatchStat, type Side } from "@/lib/match";
 import { fixtureIdFromParam } from "@/lib/match-path";
@@ -264,6 +265,7 @@ export default async function MatchPage({ params }: { params: Params }) {
 
   return (
     <>
+      <LiveRefresh active={needsLiveRefresh([fixture])} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Placar */}

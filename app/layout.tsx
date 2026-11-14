@@ -3,9 +3,8 @@ import { Barlow, Barlow_Condensed } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { LiveRefresh } from "@/components/sports/live-refresh";
 import { LiveStrip } from "@/components/sports/live-strip";
-import { getLiveFixtures, getUpcomingFixtures } from "@/lib/data";
+import { getLiveFixtures } from "@/lib/data";
 import { site } from "@/lib/site";
 
 import "./globals.css";
@@ -89,12 +88,9 @@ const organizationJsonLd = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [liveFixtures, soon] = await Promise.all([getLiveFixtures(), getUpcomingFixtures(1)]);
-  // Atualiza sozinho com jogo ao vivo ou começando nos próximos 15 minutos.
-  const startsSoon = soon.some((fixture) => {
-    const untilKickoff = new Date(fixture.kickoff).getTime() - Date.now();
-    return untilKickoff < 15 * 60 * 1000 && untilKickoff > -30 * 60 * 1000;
-  });
+  // A atualização automática (LiveRefresh) fica só nas páginas com placar ao
+  // vivo — home, resultados e partida —, não no layout de todas as páginas.
+  const liveFixtures = await getLiveFixtures();
 
   return (
     <html lang={site.lang} className={`${barlow.variable} ${barlowCondensed.variable}`}>
@@ -112,7 +108,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         <SiteHeader />
         <LiveStrip fixtures={liveFixtures} />
-        <LiveRefresh active={liveFixtures.length > 0 || startsSoon} />
 
         <main id="conteudo">{children}</main>
 
