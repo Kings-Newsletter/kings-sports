@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -44,15 +44,6 @@ export function SiteHeader() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/resultados"
-              className="hidden items-center gap-2 rounded-full border border-live-500/40 bg-live-500/10 px-3 py-1.5 font-display text-[0.95rem] font-bold text-live-400 transition-colors hover:bg-live-500/20 sm:inline-flex"
-            >
-              <span className="inline-flex size-1.5 rounded-full bg-live-400" aria-hidden="true" />
-              Ao vivo
-              <LinkPending />
-            </Link>
-
             <details ref={menu} className="group xl:hidden">
               <summary className="grid size-10 cursor-pointer list-none place-items-center rounded-[6px] border border-line text-mist-200 transition-colors hover:bg-ink-800 [&::-webkit-details-marker]:hidden">
                 <Menu className="size-5 group-open:hidden" aria-hidden="true" />

@@ -6,8 +6,10 @@ import type { Fixture } from "@/lib/types";
 /**
  * Detalhe de uma partida (lances, estatísticas, escalações, destaques), lido
  * sob demanda do resumo da ESPN: GET .../{liga}/summary?event={id}.
- * Não é guardado no banco: o cache do Next.js segura 20 s com jogo ao vivo e
- * 10 min nos demais.
+ * Não é guardado no banco: o cache do Next.js segura 10 min. Com o jogo em
+ * andamento, a página usa só o que não muda durante a partida (escalações,
+ * momento dos times, confrontos, tabela e desfalques): o portal não tem
+ * cobertura ao vivo.
  */
 
 const SITE = "https://site.api.espn.com/apis/site/v2/sports";
@@ -38,6 +40,37 @@ export type MatchLeader = {
   away?: { id?: string; name: string; value: string; photo?: string };
 };
 
+/** Um dos últimos jogos de um time, do ponto de vista dele. */
+export type FormGame = {
+  result: "W" | "D" | "L";
+  opponent: string;
+  /** Placar como a fonte publica: mandante–visitante */
+  score?: string;
+  /** "vs" em casa, "@" fora */
+  atVs?: string;
+  date?: string;
+};
+
+export type SeriesGame = {
+  date?: string;
+  home: string;
+  away: string;
+  homeScore?: string;
+  awayScore?: string;
+};
+
+export type TableRow = {
+  side: Side;
+  position?: number;
+  team: string;
+  /** Pontos (futebol) ou campanha "V-D" (ligas americanas) */
+  value?: string;
+  valueLabel: string;
+  played?: string;
+};
+
+export type Injury = { name: string; position?: string; status: string; detail?: string };
+
 export type MatchDetail = {
   events: MatchEvent[];
   stats: MatchStat[];
@@ -45,6 +78,11 @@ export type MatchDetail = {
   leaders: MatchLeader[];
   attendance?: number;
   city?: string;
+  form: { side: Side; games: FormGame[] }[];
+  /** Vitórias de cada time da partida e empates nos confrontos listados */
+  series?: { wins: Record<Side, number>; draws: number; games: SeriesGame[] };
+  table?: { rows: TableRow[] };
+  injuries: { side: Side; players: Injury[] }[];
 };
 
 /** Estatísticas exibidas, na ordem: chave da ESPN → [rótulo, é porcentagem 0–1?] */
@@ -131,6 +169,43 @@ type Summary = {
     }[];
   }[];
   gameInfo?: { attendance?: number; venue?: { address?: { city?: string } } };
+  lastFiveGames?: {
+    team?: { id?: string };
+    events?: { gameResult?: string; score?: string; atVs?: string; gameDate?: string; opponent?: { displayName?: string } }[];
+  }[];
+  seasonseries?: {
+    type?: string;
+    summary?: string;
+    events?: {
+      id?: string;
+      date?: string;
+      statusType?: { completed?: boolean; state?: string };
+      competitors?: { homeAway?: Side; score?: string; winner?: boolean; team?: { id?: string; displayName?: string } }[];
+    }[];
+  }[];
+  standings?: {
+    groups?: {
+      header?: string;
+      standings?: { entries?: { id?: string; team?: string; stats?: { name?: string; displayValue?: string; value?: number }[] }[] };
+    }[];
+  };
+  injuries?: {
+    team?: { id?: string };
+    injuries?: {
+      status?: string;
+      athlete?: { displayName?: string; position?: { abbreviation?: string } };
+      details?: { type?: string };
+    }[];
+  }[];
+};
+
+const INJURY_STATUS: Record<string, string> = {
+  Out: "Fora",
+  Questionable: "Dúvida",
+  Doubtful: "Improvável",
+  "Injured Reserve": "Lista de lesionados",
+  "Day-To-Day": "Dia a dia",
+  Suspension: "Suspenso",
 };
 
 function number(value: string | undefined, pct: boolean): number {
@@ -147,7 +222,7 @@ export async function getMatchDetail(fixture: Fixture): Promise<MatchDetail | nu
   let body: Summary;
   try {
     const response = await fetch(`${SITE}/${path}/summary?event=${espnId}`, {
-      next: { revalidate: fixture.status === "live" ? 20 : 600 },
+      next: { revalidate: 600 },
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) return null;
@@ -234,11 +309,106 @@ export async function getMatchDetail(fixture: Fixture): Promise<MatchDetail | nu
     if (row.home || row.away) leaders.push(row);
   }
 
+  const form = (body.lastFiveGames ?? []).flatMap((team) => {
+    const side = team.team?.id ? sideOf.get(team.team.id) : undefined;
+    if (!side) return [];
+    const games: FormGame[] = (team.events ?? []).flatMap((event) => {
+      const result = event.gameResult;
+      if (result !== "W" && result !== "D" && result !== "L") return [];
+      return [
+        {
+          result,
+          opponent: event.opponent?.displayName ?? "—",
+          score: event.score,
+          atVs: event.atVs,
+          date: event.gameDate,
+        },
+      ];
+    });
+    return games.length > 0 ? [{ side, games: games.slice(-5) }] : [];
+  });
+
+  // Confrontos recentes já encerrados, do mais novo ao mais antigo (o jogo
+  // atual fica de fora). O placar de vitórias é contado aqui, em português.
+  const headToHead = body.seasonseries?.find((series) => series.type === "head-to-head") ?? body.seasonseries?.[0];
+  const wins: Record<Side, number> = { home: 0, away: 0 };
+  let draws = 0;
+  const seriesGames: SeriesGame[] = (headToHead?.events ?? [])
+    .filter((event) => event.id !== espnId && (event.statusType?.completed || event.statusType?.state === "post"))
+    .flatMap((event) => {
+      const home = event.competitors?.find((c) => c.homeAway === "home");
+      const away = event.competitors?.find((c) => c.homeAway === "away");
+      if (!home?.team?.displayName || !away?.team?.displayName) return [];
+      const winner = home.winner ? home : away.winner ? away : null;
+      const winnerSide = winner?.team?.id ? sideOf.get(winner.team.id) : undefined;
+      if (winnerSide) wins[winnerSide] += 1;
+      else if (!winner) draws += 1;
+      return [
+        {
+          date: event.date,
+          home: home.team.displayName,
+          away: away.team.displayName,
+          homeScore: home.score,
+          awayScore: away.score,
+        },
+      ];
+    })
+    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  const series = seriesGames.length > 0 ? { wins, draws, games: seriesGames } : undefined;
+
+  // Linhas da tabela só dos dois times da partida.
+  let table: MatchDetail["table"];
+  for (const group of body.standings?.groups ?? []) {
+    const entries = group.standings?.entries ?? [];
+    const rows: TableRow[] = entries.flatMap((entry, index) => {
+      const side = entry.id ? sideOf.get(entry.id) : undefined;
+      if (!side) return [];
+      const stat = (name: string) => entry.stats?.find((s) => s.name === name);
+      const rank = stat("rank")?.value;
+      const points = stat("points")?.displayValue;
+      return [
+        {
+          side,
+          position: typeof rank === "number" ? rank : index + 1,
+          team: entry.team ?? "—",
+          value: points ?? stat("overall")?.displayValue,
+          valueLabel: points ? "pts" : "campanha",
+          played: stat("gamesPlayed")?.displayValue,
+        },
+      ];
+    });
+    if (rows.length === 0) continue;
+    // Ligas americanas trazem uma tabela por divisão: junta as duas.
+    table = { rows: [...(table?.rows ?? []), ...rows] };
+  }
+  if (table) table.rows.sort((a, b) => (a.side === "home" ? -1 : 1) - (b.side === "home" ? -1 : 1));
+
+  const injuries = (body.injuries ?? []).flatMap((team) => {
+    const side = team.team?.id ? sideOf.get(team.team.id) : undefined;
+    const players: Injury[] = (team.injuries ?? []).flatMap((injury) =>
+      injury.athlete?.displayName
+        ? [
+            {
+              name: injury.athlete.displayName,
+              position: injury.athlete.position?.abbreviation,
+              status: INJURY_STATUS[injury.status ?? ""] ?? injury.status ?? "—",
+              detail: injury.details?.type,
+            },
+          ]
+        : [],
+    );
+    return side && players.length > 0 ? [{ side, players }] : [];
+  });
+
   return {
     events,
     stats,
     lineups,
     leaders,
+    form,
+    series,
+    table,
+    injuries,
     attendance: body.gameInfo?.attendance || undefined,
     city: body.gameInfo?.venue?.address?.city,
   };

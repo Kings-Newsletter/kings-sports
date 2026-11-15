@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { DailyBriefs } from "@/components/editorial/daily-briefs";
 import { ArticleCard } from "@/components/news/article-card";
@@ -7,7 +7,6 @@ import { DayGuide, type DayTab } from "@/components/sports/day-guide";
 import { StandingsTable } from "@/components/sports/standings-table";
 import { CrestTile } from "@/components/sports/crest-tile";
 import { HomeRail } from "@/components/sports/home-rail";
-import { LiveRefresh } from "@/components/sports/live-refresh";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Container } from "@/components/ui/icons";
 import { NavIcon } from "@/components/ui/nav-icon";
@@ -18,7 +17,6 @@ import {
   getFixturesForDay,
   getLastMeetings,
   getStandings,
-  needsLiveRefresh,
 } from "@/lib/data";
 import { addDays, toLocalYmd } from "@/lib/dates";
 import { getDrivers, getFeaturedPlayers, getNationalTeams } from "@/lib/directory";
@@ -56,7 +54,7 @@ function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Uma frase sobre o dia: quantos jogos, quantos ao vivo, quantos faltam. */
+/** Uma frase sobre o dia: quantos jogos, quantos em andamento, quantos faltam. */
 function daySummary(day: string, fixtures: Fixture[]) {
   const total = fixtures.length;
   if (total === 0) return "Nenhum jogo das competições acompanhadas.";
@@ -68,7 +66,7 @@ function daySummary(day: string, fixtures: Fixture[]) {
     (fixture) => fixture.status === "scheduled" && new Date(fixture.kickoff).getTime() > Date.now(),
   ).length;
   const parts = [
-    live > 0 ? `${live} ao vivo` : null,
+    live > 0 ? `${live} em andamento` : null,
     ahead > 0 ? `${ahead} ainda por começar` : null,
   ].filter(Boolean);
   return parts.length > 0 ? `${games} hoje, ${parts.join(" e ")}.` : `${games} hoje, todos encerrados.`;
@@ -134,7 +132,6 @@ export default async function HomePage({ searchParams }: { searchParams: SearchP
   return (
     <>
       {/* "Hoje" é a única aba com jogo que muda de placar. */}
-      <LiveRefresh active={needsLiveRefresh(tabs[1]!.ymd === activeTab.ymd ? dayFixtures : [])} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}

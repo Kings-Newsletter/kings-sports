@@ -4,9 +4,9 @@
 
 # King's Sports
 
-### Os jogos de hoje, o placar ao vivo e quem faz o espetáculo.
+### Os jogos de hoje, os resultados e quem faz o espetáculo.
 
-Um portal de esportes para o torcedor brasileiro: a programação do dia no futebol, na NBA, na NFL e na Fórmula 1, placar ao vivo, tabelas, notícias e fichas de times, seleções, jogadores e pilotos.
+Um portal de esportes para o torcedor brasileiro: a programação do dia no futebol, na NBA, na NFL e na Fórmula 1, resultados, tabelas, notícias e fichas de times, seleções, jogadores e pilotos.
 
 [English](./README.md) · **Português (Brasil)**
 
@@ -54,7 +54,7 @@ A interface é em português do Brasil e o endereço planejado é **kingsnewslet
 ## Funcionalidades
 
 - **Guia do dia**: todos os jogos e sessões do dia numa linha do tempo por hora, com a linha do "agora", o próximo jogo em destaque com contagem regressiva e filtros por dia (ontem, hoje, amanhã) e por esporte.
-- **Placar ao vivo**: placar e relógio atualizados a cada 15 segundos durante os jogos, com intervalo, fim de período e acréscimos (`45+2'`).
+- **Sem placar ao vivo**: jogo em andamento aparece só como "Em andamento"; o placar é publicado depois do fim.
 - **Resultados e calendário**: resultados recentes e o calendário da temporada inteira, agrupados por dia.
 - **Tabelas e estatísticas**: classificações, artilharia, assistências e líderes da NBA e da NFL.
 - **Página da partida**: lances, estatísticas dos times, escalações e destaques.

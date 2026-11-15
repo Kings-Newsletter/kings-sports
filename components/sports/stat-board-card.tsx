@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { AthletePhoto } from "@/components/sports/athlete-photo";
 import { formatNumber } from "@/lib/format";

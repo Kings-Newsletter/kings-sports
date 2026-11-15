@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { notFound } from "next/navigation";
 
 import { StatusPill } from "@/components/sports/fixture-row";
-import { LiveRefresh } from "@/components/sports/live-refresh";
 import { TeamCrest } from "@/components/sports/team-crest";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Container } from "@/components/ui/icons";
 import { CompetitionLogo } from "@/components/sports/competition-logo";
 import { getCatalogEntry } from "@/lib/catalog";
-import { getFixtureById, needsLiveRefresh } from "@/lib/data";
+import { getFixtureById } from "@/lib/data";
 import { formatDate, formatTime, formatWeekday } from "@/lib/format";
-import { getMatchDetail, type MatchEvent, type MatchLeader, type MatchStat, type Side } from "@/lib/match";
+import { getMatchDetail, type FormGame, type MatchEvent, type MatchLeader, type MatchStat, type Side } from "@/lib/match";
 import { fixtureIdFromParam } from "@/lib/match-path";
 import { buildMetadata } from "@/lib/seo";
 import type { Fixture } from "@/lib/types";
@@ -192,6 +191,51 @@ function Leaders({ leaders, competition }: { leaders: MatchLeader[]; competition
   );
 }
 
+/* ------------------------------------------------------------ momento */
+
+const dayMonthYear = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "America/Sao_Paulo",
+});
+
+/** Data no padrão dd/mm/aaaa, em horário de Brasília. */
+function formatDayMonthYear(value: string): string {
+  return dayMonthYear.format(new Date(value));
+}
+
+const FORM_STYLE: Record<FormGame["result"], { label: string; className: string }> = {
+  W: { label: "V", className: "bg-pitch-500/20 text-pitch-400" },
+  D: { label: "E", className: "bg-mist-600/25 text-mist-300" },
+  L: { label: "D", className: "bg-live-500/15 text-live-400" },
+};
+
+function FormStrip({ games }: { games: FormGame[] }) {
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {games.map((game, index) => {
+        const style = FORM_STYLE[game.result];
+        const where = game.atVs === "@" ? "fora" : "em casa";
+        const title = `${style.label === "V" ? "Vitória" : style.label === "E" ? "Empate" : "Derrota"} ${where} contra ${game.opponent}${
+          game.score ? ` (${game.score})` : ""
+        }`;
+        return (
+          <li key={`${game.date}-${index}`}>
+            <span
+              title={title}
+              className={`grid size-8 place-items-center rounded-[4px] font-display text-sm font-bold ${style.className}`}
+            >
+              {style.label}
+              <span className="sr-only">: {title}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 /* ------------------------------------------------------------- página */
 
 function TeamBlock({
@@ -250,6 +294,14 @@ export default async function MatchPage({ params }: { params: Params }) {
   const homeWins = fixture.status === "finished" && hasScore && fixture.score!.home > fixture.score!.away;
   const awayWins = fixture.status === "finished" && hasScore && fixture.score!.away > fixture.score!.home;
   const isFootball = fixture.sport === "futebol";
+  // Sem cobertura ao vivo: com o jogo rolando, só o que não muda na partida.
+  const live = fixture.status === "live";
+  const nameOf = (side: Side) => (side === "home" ? fixture.home!.name : fixture.away!.name);
+  const homeForm = detail?.form.find((f) => f.side === "home");
+  const awayForm = detail?.form.find((f) => f.side === "away");
+  const preMatch = Boolean(
+    detail && (detail.form.length > 0 || detail.series || detail.table || detail.injuries.length > 0),
+  );
   const home = detail?.lineups.find((l) => l.side === "home");
   const away = detail?.lineups.find((l) => l.side === "away");
 
@@ -265,7 +317,6 @@ export default async function MatchPage({ params }: { params: Params }) {
 
   return (
     <>
-      <LiveRefresh active={needsLiveRefresh([fixture])} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Placar */}
@@ -292,6 +343,10 @@ export default async function MatchPage({ params }: { params: Params }) {
                   <span className="text-[0.5em] text-mist-600">–</span>
                   <span className={homeWins ? "text-mist-500" : ""}>{fixture.score!.away}</span>
                 </p>
+              ) : live ? (
+                <p className="score text-[clamp(2.4rem,7vw,4rem)] leading-none text-mist-500" aria-hidden="true">
+                  vs
+                </p>
               ) : (
                 <p className="score text-[clamp(2.4rem,7vw,4rem)] leading-none text-mist-200">{formatTime(fixture.kickoff)}</p>
               )}
@@ -311,33 +366,47 @@ export default async function MatchPage({ params }: { params: Params }) {
             {detail?.city ? `, ${detail.city}` : ""}
             {detail?.attendance ? `. Público: ${detail.attendance.toLocaleString("pt-BR")}` : ""}
           </p>
-          {fixture.broadcast?.length ? (
-            <p className="mt-2 text-center text-sm text-mist-300">Onde assistir: {fixture.broadcast.join(", ")}</p>
-          ) : null}
         </Container>
       </section>
 
       <Container className="py-10 sm:py-12">
         {!detail ? (
-          <EmptyState
-            title="Detalhes indisponíveis"
-            description="A fonte não respondeu agora. O placar acima continua sendo atualizado pela coleta."
-          />
+          live ? (
+            <EmptyState
+              title="Partida em andamento"
+              description="O King's Sports não acompanha jogos ao vivo. Placar, lances e estatísticas aparecem aqui depois do fim da partida."
+            />
+          ) : (
+            <EmptyState
+              title="Detalhes indisponíveis"
+              description="A fonte não respondeu agora. Tente de novo em alguns minutos."
+            />
+          )
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
-            {isFootball && (detail.events.length > 0 || fixture.status !== "scheduled") ? (
+            {live ? (
+              <div className="lg:col-span-2">
+                <EmptyState
+                  compact
+                  title="Partida em andamento"
+                  description="O King's Sports não acompanha jogos ao vivo. Placar, lances e estatísticas aparecem aqui depois do fim da partida."
+                />
+              </div>
+            ) : null}
+
+            {!live && isFootball && (detail.events.length > 0 || fixture.status !== "scheduled") ? (
               <Panel title="Lances">
                 <Timeline events={detail.events} showSubs={false} />
               </Panel>
             ) : null}
 
-            {detail.leaders.length > 0 ? (
+            {!live && detail.leaders.length > 0 ? (
               <Panel title="Destaques">
                 <Leaders leaders={detail.leaders} competition={fixture.competition} />
               </Panel>
             ) : null}
 
-            {detail.stats.length > 0 ? (
+            {!live && detail.stats.length > 0 ? (
               <Panel title="Estatísticas">
                 <div className="mb-4 flex items-center justify-between text-xs font-semibold">
                   <span className="text-flood-300">{fixture.home.shortName ?? fixture.home.name}</span>
@@ -394,13 +463,103 @@ export default async function MatchPage({ params }: { params: Params }) {
               </Panel>
             ) : null}
 
-            {isFootball && detail.events.some((e) => e.kind === "sub") ? (
+            {homeForm || awayForm ? (
+              <Panel title="Momento dos times">
+                <div className="space-y-4">
+                  {[homeForm, awayForm].map((team) =>
+                    team ? (
+                      <div key={team.side}>
+                        <p className="mb-2 truncate font-display text-sm font-bold text-mist-200">{nameOf(team.side)}</p>
+                        <FormStrip games={team.games} />
+                      </div>
+                    ) : null,
+                  )}
+                  <p className="text-[0.75rem] text-mist-600">Últimos jogos, do mais antigo ao mais recente.</p>
+                </div>
+              </Panel>
+            ) : null}
+
+            {detail.table ? (
+              <Panel title="Na tabela">
+                <ul className="divide-y divide-line-soft">
+                  {detail.table.rows.map((row) => (
+                    <li key={`${row.side}-${row.team}`} className="flex items-center gap-3 py-2.5">
+                      <span className="score w-8 shrink-0 text-right text-xl text-flood-300">{row.position ? `${row.position}º` : "–"}</span>
+                      <span className="min-w-0 flex-1 truncate font-medium text-mist-100">{nameOf(row.side)}</span>
+                      {row.played ? <span className="text-[0.8125rem] text-mist-500">{row.played} jogos</span> : null}
+                      {row.value ? (
+                        <span className="score text-lg text-mist-50">
+                          {row.value}
+                          <span className="ml-1 text-xs text-mist-500">{row.valueLabel}</span>
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            ) : null}
+
+            {detail.series ? (
+              <Panel title="Últimos confrontos">
+                <p className="-mt-2 mb-3 text-[0.8125rem] text-mist-500">
+                  {nameOf("home")} {detail.series.wins.home} {detail.series.wins.home === 1 ? "vitória" : "vitórias"},{" "}
+                  {nameOf("away")} {detail.series.wins.away} {detail.series.wins.away === 1 ? "vitória" : "vitórias"} e{" "}
+                  {detail.series.draws} {detail.series.draws === 1 ? "empate" : "empates"}
+                </p>
+                <ul className="divide-y divide-line-soft">
+                  {detail.series.games.map((game) => (
+                    <li key={`${game.date}-${game.home}`} className="grid grid-cols-[4.5rem_1fr_auto_1fr] items-center gap-2 py-2.5 text-sm">
+                      <span className="text-[0.75rem] text-mist-500">{game.date ? formatDayMonthYear(game.date) : ""}</span>
+                      <span className="truncate text-right text-mist-100">{game.home}</span>
+                      <span className="score rounded-[3px] bg-ink-950 px-2 py-0.5 text-mist-50">
+                        {game.homeScore ?? "–"}–{game.awayScore ?? "–"}
+                      </span>
+                      <span className="truncate text-mist-100">{game.away}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            ) : null}
+
+            {detail.injuries.length > 0 ? (
+              <Panel title="Desfalques">
+                <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
+                  {detail.injuries.map((team) => (
+                    <div key={team.side}>
+                      <p className="mb-2 truncate font-display text-sm font-bold text-mist-200">{nameOf(team.side)}</p>
+                      <ul className="space-y-1.5 text-sm">
+                        {team.players.map((player) => (
+                          <li key={player.name} className="flex items-center gap-2">
+                            <span className="min-w-0 flex-1 truncate text-mist-100">
+                              {player.name}
+                              {player.position ? <span className="ml-1.5 text-[0.6875rem] text-mist-600">{player.position}</span> : null}
+                            </span>
+                            <span
+                              className={`shrink-0 rounded-[3px] px-1.5 py-0.5 text-[0.6875rem] font-semibold ${
+                                player.status === "Fora" || player.status === "Lista de lesionados"
+                                  ? "bg-live-500/15 text-live-400"
+                                  : "bg-gold-500/15 text-gold-300"
+                              }`}
+                              title={player.detail}
+                            >
+                              {player.status}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+            ) : null}
+
+            {!live && isFootball && detail.events.some((e) => e.kind === "sub") ? (
               <Panel title="Substituições">
                 <Timeline events={detail.events.filter((e) => e.kind === "sub")} showSubs />
               </Panel>
             ) : null}
 
-            {detail.events.length === 0 && detail.stats.length === 0 && detail.leaders.length === 0 && !home ? (
+            {!live && detail.events.length === 0 && detail.stats.length === 0 && detail.leaders.length === 0 && !home && !preMatch ? (
               <div className="lg:col-span-2">
                 <EmptyState
                   title={fixture.status === "scheduled" ? "A partida ainda não começou" : "Sem detalhes para esta partida"}

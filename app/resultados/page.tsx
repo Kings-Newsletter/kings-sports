@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 
 import { DayRail } from "@/components/sports/day-rail";
 import { FixtureGroups } from "@/components/sports/fixture-groups";
-import { LiveRefresh } from "@/components/sports/live-refresh";
 import { SportFilter } from "@/components/sports/sport-filter";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Container, LiveDot } from "@/components/ui/icons";
+import { Container } from "@/components/ui/icons";
 import { PageHeader } from "@/components/ui/page-header";
-import { getFixtures, getRecentResults } from "@/lib/data";
+import { getRecentResults } from "@/lib/data";
 import { buildMetadata } from "@/lib/seo";
 import { toLocalYmd } from "@/lib/dates";
 import { getSport } from "@/lib/sports";
@@ -36,8 +35,8 @@ export async function generateMetadata({
   return buildMetadata({
     title: current ? `Resultados de ${current.name}` : "Resultados",
     description: racing
-      ? "Etapas ao vivo e resultados encerrados do automobilismo, com status explícito e horário de atualização."
-      : "Placares ao vivo e resultados encerrados, com status explícito e horário de atualização.",
+      ? "Resultados encerrados do automobilismo, com status explícito e horário de atualização."
+      : "Resultados encerrados, com status explícito e horário de atualização.",
     path: current ? `/resultados?sport=${current.slug}` : "/resultados",
   });
 }
@@ -47,14 +46,10 @@ export default async function ResultsPage({ searchParams }: { searchParams: Sear
   const current = getSport(sport);
   const racing = current?.slug === "automobilismo";
 
-  const [live, finished] = await Promise.all([
-    getFixtures({ sport, status: "live" }),
-    getRecentResults(120, sport),
-  ]);
+  const finished = await getRecentResults(120, sport);
 
   return (
     <Container>
-      <LiveRefresh active={live.length > 0} />
       <PageHeader
         section="/resultados"
         title={current ? `Resultados de ${current.name}` : "Resultados"}
@@ -68,31 +63,6 @@ export default async function ResultsPage({ searchParams }: { searchParams: Sear
       </PageHeader>
 
       <div className="space-y-10 py-10 sm:py-12">
-        <section>
-          <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-mist-50">
-            {live.length > 0 ? <LiveDot /> : null}
-            Ao vivo
-            {live.length > 0 ? (
-              <span className="rounded-full bg-live-500/15 px-2 py-0.5 text-xs font-semibold text-live-400">
-                {live.length}
-              </span>
-            ) : null}
-          </h2>
-          {live.length > 0 ? (
-            <FixtureGroups fixtures={live} />
-          ) : (
-            <EmptyState
-              compact
-              title={racing ? "Nenhuma etapa em andamento" : "Nenhuma partida em andamento"}
-              description={
-                racing
-                  ? "Quando houver etapa ao vivo, o tempo de sessão e o resultado aparecem aqui e na faixa superior do site."
-                  : "Quando houver cobertura ao vivo, o placar é atualizado aqui e na faixa superior do site."
-              }
-            />
-          )}
-        </section>
-
         <section>
           <h2 className="mb-4 font-display text-lg font-bold text-mist-50">Últimos resultados</h2>
           {finished.length > 0 ? (

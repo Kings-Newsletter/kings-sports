@@ -61,15 +61,6 @@ export function CloseIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function LiveDot({ className = "" }: { className?: string }) {
-  return (
-    <span className={`relative flex size-2 ${className}`} aria-hidden="true">
-      <span className="absolute inline-flex size-full animate-ping rounded-full bg-live-400 opacity-70" />
-      <span className="relative inline-flex size-2 rounded-full bg-live-500" />
-    </span>
-  );
-}
-
 export function Container({
   children,
   className = "",

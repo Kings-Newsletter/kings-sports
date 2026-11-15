@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { CalendarDays, ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
 
 import { ArticleCard, ArticleListItem } from "@/components/news/article-card";

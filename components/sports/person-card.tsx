@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { Portrait } from "@/components/sports/portrait";
 import { TeamCrest } from "@/components/sports/team-crest";

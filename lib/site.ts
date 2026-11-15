@@ -8,7 +8,7 @@ export const site = {
   shortName: "Kings Sports",
   tagline: "Jogos, resultados e notícias do esporte",
   description:
-    "Jogos do dia, placares ao vivo, tabelas e notícias de futebol, NBA, NFL e Fórmula 1, com fichas de times, seleções, jogadores e pilotos.",
+    "Jogos do dia, resultados, tabelas e notícias de futebol, NBA, NFL e Fórmula 1, com fichas de times, seleções, jogadores e pilotos.",
   newsletterUrl: process.env.NEXT_PUBLIC_NEWSLETTER_URL ?? "https://kingsnewsletter.com",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://kingsnewsletter.com/sports",
   basePath:

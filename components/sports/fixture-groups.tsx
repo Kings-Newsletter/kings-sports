@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { FixtureRow } from "@/components/sports/fixture-row";
 import { CompetitionLogo } from "@/components/sports/competition-logo";
@@ -46,7 +46,7 @@ export function FixtureGroups({
                 </Link>
                 {live > 0 ? (
                   <span className="shrink-0 rounded-[3px] bg-live-500/15 px-1.5 py-0.5 font-display text-xs font-bold text-live-400">
-                    {live} ao vivo
+                    {live} em andamento
                   </span>
                 ) : null}
               </h3>

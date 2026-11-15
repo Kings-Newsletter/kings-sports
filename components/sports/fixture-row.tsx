@@ -1,15 +1,13 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
-import { LiveClock } from "@/components/sports/live-clock";
 import { TeamCrest } from "@/components/sports/team-crest";
 import { formatShortDate, formatTime } from "@/lib/format";
-import { liveClockText } from "@/lib/live-clock";
 import { fixturePath, matchPath } from "@/lib/match-path";
 import type { Fixture } from "@/lib/types";
 
 const statusLabel: Record<Fixture["status"], string> = {
   scheduled: "Agendado",
-  live: "Ao vivo",
+  live: "Em andamento",
   finished: "Encerrado",
   postponed: "Adiado",
   cancelled: "Cancelado",
@@ -23,27 +21,18 @@ const barColor: Record<Fixture["status"], string> = {
   cancelled: "bg-mist-600/30",
 };
 
-/** Selo de status: relógio ao vivo, "Fim", "Adiado"… */
+/** Selo de status: "Em andamento", "Fim", "Adiado"… */
 export function StatusPill({ fixture }: { fixture: Fixture }) {
   if (fixture.status === "live") {
-    const clock = {
-      kickoff: fixture.kickoff,
-      updatedAt: fixture.updatedAt,
-      clock: fixture.clock,
-      status: fixture.status,
-      sport: fixture.sport,
-      kind: fixture.kind,
-    };
-    // Intervalo / fim de período: o jogo está parado, então o selo não pisca.
-    const paused = /^(Intervalo|Fim do)/.test(fixture.clock ?? "");
+    // Sem placar ao vivo no portal: o jogo só aparece como em andamento.
+    // A animação (anel pulsando) é só CSS e respeita "reduzir movimento".
     return (
-      <span
-        className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[3px] px-1.5 py-0.5 font-display text-[0.8125rem] font-bold leading-none ${
-          paused ? "bg-gold-500/15 text-gold-300" : "bg-live-500/15 text-live-400"
-        }`}
-      >
-        <span className={`size-1.5 rounded-full ${paused ? "bg-gold-400" : "animate-pulse bg-live-400"}`} aria-hidden="true" />
-        <LiveClock input={clock} initial={liveClockText(clock)} title="Relógio ao vivo" />
+      <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[3px] bg-live-500/15 px-1.5 py-0.5 font-display text-[0.8125rem] font-bold leading-none text-live-400">
+        <span className="relative flex size-1.5" aria-hidden="true">
+          <span className="absolute inline-flex size-full rounded-full bg-live-400 opacity-75 motion-safe:animate-ping" />
+          <span className="relative inline-flex size-1.5 rounded-full bg-live-400" />
+        </span>
+        Em andamento
       </span>
     );
   }
@@ -62,24 +51,6 @@ export function StatusPill({ fixture }: { fixture: Fixture }) {
     );
   }
   return null;
-}
-
-function Broadcast({ channels }: { channels?: string[] }) {
-  if (!channels || channels.length === 0) return null;
-  return (
-    <span className="flex flex-wrap items-center gap-1.5">
-      <span className="sr-only">Onde assistir:</span>
-      <svg viewBox="0 0 24 24" className="size-3.5 text-flood-400" aria-hidden="true" fill="none">
-        <rect x="3" y="5" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
-        <path d="M8 20h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-      {channels.map((channel) => (
-        <span key={channel} className="rounded-[3px] bg-ink-700 px-1.5 py-0.5 font-medium text-mist-200">
-          {channel}
-        </span>
-      ))}
-    </span>
-  );
 }
 
 function ScoreBox({ fixture }: { fixture: Fixture }) {
@@ -127,10 +98,9 @@ export function FixtureRow({
   const meta = [fixture.round, fixture.venue].filter(Boolean).join(", ");
   const footer = (
     <>
-      {fixture.broadcast?.length || note ? (
+      {note ? (
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.75rem] text-mist-500">
-          <Broadcast channels={fixture.broadcast} />
-          {note ? <span>{note}</span> : null}
+          <span>{note}</span>
         </div>
       ) : null}
     </>
