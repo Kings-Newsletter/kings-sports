@@ -16,7 +16,6 @@ import { getDb, isDbConfigured } from "@/lib/db/mongo";
 import { normalizeTeam, sameTeam } from "@/lib/normalize";
 import type {
   Article,
-  BroadcastEntry,
   Competition,
   DailyBrief,
   Fixture,
@@ -49,7 +48,7 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
  * vale dentro de uma renderização; sem isto, cada visita relia o banco.
  * O resultado precisa ser serializável em JSON (nada de Map ou Date).
  */
-// Jogos ao vivo e próximos (faixa do layout). Não pode ficar abaixo do
+// Próximos jogos. Não pode ficar abaixo do
 // `revalidate = 60` do layout: o menor tempo de cache vira o tempo de ISR de
 // todas as páginas estáticas, que passariam a se regenerar com mais frequência.
 const LIVE_TTL = 60;
@@ -82,7 +81,6 @@ const loadJsonStandings = cache(() => readCollection<Standings>("classificacoes.
 const loadStatBoards = cache(() => readCollection<StatBoard>("estatisticas.json"));
 const loadTransfers = cache(() => readCollection<Transfer>("transferencias.json"));
 const loadBriefs = cache(() => readCollection<DailyBrief>("rodadas.json"));
-const loadBroadcasts = cache(() => readCollection<BroadcastEntry>("transmissoes.json"));
 
 function byNewest<T extends { publishedAt?: string; kickoff?: string; date?: string }>(
   items: T[],
@@ -315,21 +313,6 @@ function queryFixtures(query: FixtureQuery): Promise<Fixture[]> {
   );
 }
 
-/** Acrescenta "onde assistir" da curadoria (content/transmissoes.json). */
-async function withBroadcasts(fixtures: Fixture[]): Promise<Fixture[]> {
-  const entries = await loadBroadcasts();
-  if (entries.length === 0) return fixtures;
-  return fixtures.map((fixture) => {
-    if (!fixture.home || !fixture.away) return fixture;
-    const day = toLocalYmd(fixture.kickoff);
-    const entry = entries.find(
-      (item) =>
-        item.date === day && sameTeam(item.home, fixture.home!.name) && sameTeam(item.away, fixture.away!.name),
-    );
-    return entry ? { ...fixture, broadcast: entry.channels } : fixture;
-  });
-}
-
 /**
  * Status de sessões com duração (F1): o banco só é atualizado a cada coleta,
  * mas o início e o fim previstos permitem saber, na hora, se a sessão está no ar.
@@ -382,26 +365,18 @@ async function withCrests(fixtures: Fixture[]): Promise<Fixture[]> {
   });
 }
 
-export async function getFixtures(query: FixtureQuery = {}): Promise<Fixture[]> {
-  return withCrests(await withBroadcasts(withEventStatus(await queryFixtures(query))));
+/**
+ * O portal não tem placar ao vivo: jogo em andamento aparece sem placar,
+ * relógio nem resultado parcial. O placar só é mostrado depois do fim.
+ */
+function withoutLiveScore(fixtures: Fixture[]): Fixture[] {
+  return fixtures.map((fixture) =>
+    fixture.status === "live" ? { ...fixture, score: undefined, clock: undefined, result: undefined } : fixture,
+  );
 }
 
-/** Jogos ao vivo agora. Compartilhado entre visitas por até 60 s. */
-export const getLiveFixtures = unstable_cache(loadLiveFixtures, ["data:live-fixtures"], {
-  revalidate: LIVE_TTL,
-});
-
-async function loadLiveFixtures(): Promise<Fixture[]> {
-  // Um jogo "ao vivo" há mais de 6 horas é dado parado, não jogo em andamento.
-  // Sessões de F1 podem estar marcadas como agendadas no banco por alguns
-  // minutos; o status é recalculado pelo horário de início e fim.
-  const now = Date.now();
-  const fixtures = await getFixtures({
-    status: ["live", "scheduled"],
-    from: new Date(now - 6 * 60 * 60 * 1000),
-    to: new Date(now + 60_000),
-  });
-  return fixtures.filter((fixture) => fixture.status === "live");
+export async function getFixtures(query: FixtureQuery = {}): Promise<Fixture[]> {
+  return withCrests(withoutLiveScore(withEventStatus(await queryFixtures(query))));
 }
 
 /**
@@ -426,20 +401,6 @@ async function loadUpcomingFixtures(limit = 6, sport?: string): Promise<Fixture[
     .slice(0, limit);
 }
 
-/**
- * Se a página deve se atualizar sozinha: há jogo ao vivo, ou um começa nos
- * próximos 15 minutos (ou começou há pouco e o status ainda não virou).
- */
-export function needsLiveRefresh(fixtures: Fixture[]): boolean {
-  const now = Date.now();
-  return fixtures.some((fixture) => {
-    if (fixture.status === "live") return true;
-    if (fixture.status !== "scheduled") return false;
-    const untilKickoff = new Date(fixture.kickoff).getTime() - now;
-    return untilKickoff < 15 * 60 * 1000 && untilKickoff > -30 * 60 * 1000;
-  });
-}
-
 export async function getRecentResults(limit = 6, sport?: string): Promise<Fixture[]> {
   return getFixtures({ sport, status: "finished", order: "desc", limit });
 }
@@ -447,7 +408,7 @@ export async function getRecentResults(limit = 6, sport?: string): Promise<Fixtu
 /**
  * Calendário: partidas de um intervalo (um mês), compartilhadas entre visitas.
  * Só a leitura do banco entra no cache, por intervalo + esporte + competição;
- * o status de sessões (F1), os escudos e as transmissões são aplicados depois,
+ * o status de sessões (F1) e os escudos são aplicados depois,
  * na hora. Meses encerrados mudam pouco e ficam guardados por mais tempo.
  */
 export async function getCalendarFixtures(query: {
@@ -462,7 +423,7 @@ export async function getCalendarFixtures(query: {
     () => read(query.from.toISOString(), query.to.toISOString(), query.sport, query.competition),
     () => fixturesFromJson(query),
   );
-  return withCrests(await withBroadcasts(withEventStatus(fixtures)));
+  return withCrests(withoutLiveScore(withEventStatus(fixtures)));
 }
 
 function calendarRange(from: string, to: string, sport?: string, competition?: string) {
@@ -495,7 +456,7 @@ export async function getFixtureById(id: string): Promise<Fixture | null> {
     async () => (await loadJsonFixtures()).filter((fixture) => fixture.id === id),
   );
   if (found.length === 0) return null;
-  const [enriched] = await withCrests(await withBroadcasts(withEventStatus(found)));
+  const [enriched] = await withCrests(withoutLiveScore(withEventStatus(found)));
   return enriched ?? null;
 }
 

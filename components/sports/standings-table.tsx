@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { TeamCrest } from "@/components/sports/team-crest";
 import { constructorHref, driverHref } from "@/lib/slugs";

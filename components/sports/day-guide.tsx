@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { CompetitionLogo } from "@/components/sports/competition-logo";
 import { StatusPill } from "@/components/sports/fixture-row";
@@ -58,20 +58,6 @@ function byHour(list: Fixture[]) {
 /* Coluna das horas: largura única para a linha do tempo inteira. */
 const RAIL = "grid grid-cols-[3rem_minmax(0,1fr)] sm:grid-cols-[4.5rem_minmax(0,1fr)]";
 
-function Channels({ channels, className = "" }: { channels?: string[]; className?: string }) {
-  if (!channels?.length) return null;
-  return (
-    <span className={`flex flex-wrap items-center gap-1.5 ${className}`}>
-      <span className="sr-only">Onde assistir:</span>
-      {channels.map((channel) => (
-        <span key={channel} className="rounded-[3px] bg-ink-700 px-1.5 py-0.5 text-[0.75rem] font-medium text-mist-200">
-          {channel}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function CenterBox({ fixture }: { fixture: Fixture }) {
   const hasScore = typeof fixture.score?.home === "number";
   if (!hasScore) {
@@ -86,7 +72,7 @@ function CenterBox({ fixture }: { fixture: Fixture }) {
   );
 }
 
-/** Uma linha da grade: competição, confronto e onde assistir. */
+/** Uma linha da grade: competição e confronto. */
 function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; past?: boolean }) {
   const entry = getCatalogEntry(fixture.competition);
   const competition = entry?.shortName ?? entry?.name ?? fixture.competition;
@@ -117,10 +103,7 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
     <>
       {/* Celular: competição em cima, times empilhados, placar ou hora à direita */}
       <div className="sm:hidden">
-        <div className="flex items-center justify-between gap-3">
-          {meta}
-          <Channels channels={fixture.broadcast} />
-        </div>
+        <div className="flex items-center justify-between gap-3">{meta}</div>
         <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5">
           <span className={`flex min-w-0 items-center gap-2 ${awayWins ? "text-mist-500" : tone} ${homeWins ? "font-semibold" : ""}`}>
             <TeamCrest url={fixture.home.crest} name={fixture.home.name} size={22} />
@@ -143,8 +126,8 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
         </div>
       </div>
 
-      {/* Telas maiores: competição | mandante placar visitante | onde assistir */}
-      <div className="hidden grid-cols-[7rem_minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-1 sm:grid lg:grid-cols-[7rem_minmax(0,1fr)_5.5rem_minmax(0,1fr)_auto] lg:gap-4">
+      {/* Telas maiores: competição | mandante placar visitante */}
+      <div className="hidden grid-cols-[7rem_minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-1 sm:grid lg:gap-4">
         {metaBase}
         <span className={`flex min-w-0 items-center justify-end gap-2.5 text-right ${awayWins ? "text-mist-500" : tone} ${homeWins ? "font-semibold" : ""}`}>
           <span className="truncate">{fixture.home.name}</span>
@@ -158,11 +141,10 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
           <TeamCrest url={fixture.away.crest} name={fixture.away.name} size={26} />
           <span className="truncate">{fixture.away.name}</span>
         </span>
-        <Channels channels={fixture.broadcast} className="max-lg:col-span-full max-lg:mt-1 max-lg:justify-end lg:justify-end" />
       </div>
     </>
   ) : (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:grid sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-4 sm:gap-y-1 lg:grid-cols-[7rem_minmax(0,1fr)_auto] lg:gap-4">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:grid sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-4 sm:gap-y-1 lg:gap-4">
       {meta}
       <span className="min-w-0">
         <span className={`block font-display text-[1.05rem] font-bold leading-tight ${tone}`}>
@@ -171,7 +153,6 @@ function GuideRow({ fixture, note, past }: { fixture: Fixture; note?: string; pa
         </span>
         {fixture.result ? <span className="mt-0.5 block text-sm text-pitch-400">{fixture.result}</span> : null}
       </span>
-      <Channels channels={fixture.broadcast} className="max-lg:col-span-full max-lg:justify-end sm:justify-end" />
     </div>
   );
 
@@ -258,12 +239,6 @@ function NextUp({ fixture, now }: { fixture: Fixture; now: number }) {
           {entry?.name ?? fixture.competition}
         </span>
         {fixture.venue ? <span>{fixture.venue}</span> : null}
-        {fixture.broadcast?.length ? (
-          <span className="flex items-center gap-2">
-            Onde assistir
-            <Channels channels={fixture.broadcast} />
-          </span>
-        ) : null}
       </div>
     </>
   );
@@ -398,7 +373,7 @@ export function DayGuide({
         <div className="mt-6">
           <EmptyState
             title="Nenhum jogo neste dia"
-            description="Quando a coleta encontrar partidas ou sessões das competições acompanhadas, elas aparecem aqui com horário, placar e onde assistir."
+            description="Quando a coleta encontrar partidas ou sessões das competições acompanhadas, elas aparecem aqui com horário e placar."
           />
         </div>
       ) : (

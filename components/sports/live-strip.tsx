@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { LiveClock } from "@/components/sports/live-clock";
+import { LiveScoreText } from "@/components/sports/live-score";
 import { TeamCrest } from "@/components/sports/team-crest";
 import { Container } from "@/components/ui/icons";
 import { fixturePath } from "@/lib/match-path";
@@ -50,7 +51,7 @@ export function LiveStrip({ fixtures }: { fixtures: Fixture[] }) {
                       <TeamCrest url={fixture.home.crest} name={fixture.home.name} size={16} />
                       <span className="font-medium text-mist-100">{fixture.home.shortName ?? fixture.home.name}</span>
                       <span className="score rounded-[3px] bg-ink-950 px-1.5 text-sm text-mist-50">
-                        {fixture.score ? `${fixture.score.home}–${fixture.score.away}` : "–"}
+                        <LiveScoreText fixture={fixture} />
                       </span>
                       <span className="font-medium text-mist-100">{fixture.away.shortName ?? fixture.away.name}</span>
                       <TeamCrest url={fixture.away.crest} name={fixture.away.name} size={16} />

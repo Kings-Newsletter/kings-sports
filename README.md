@@ -4,9 +4,9 @@
 
 # King's Sports
 
-### Today's games, live scores, and the people behind them.
+### Today's games, results, and the people behind them.
 
-A sports portal for Brazilian fans: the day's schedule across football, the NBA, the NFL, and Formula 1, live scores, standings, news, and profiles for teams, national teams, players, and drivers.
+A sports portal for Brazilian fans: the day's schedule across football, the NBA, the NFL, and Formula 1, results, standings, news, and profiles for teams, national teams, players, and drivers.
 
 **English** · [Português (Brasil)](./README.pt-BR.md)
 
@@ -54,7 +54,7 @@ The interface is in Brazilian Portuguese and is planned to be served at **kingsn
 ## Features
 
 - **Daily guide** — every game and session of the day on an hourly timeline, with a "now" line, the next game highlighted with a countdown, and filters by day (yesterday, today, tomorrow) and sport.
-- **Live scores** — scores and clocks refreshed every 15 seconds while games are on, including halftime, end of period, and stoppage time (`45+2'`).
+- **No live scores** — games in progress show only "In progress"; the score is published after the final whistle.
 - **Results and calendar** — recent results and the full season calendar, grouped by day.
 - **Standings and statistics** — league tables, top scorers, assists, and NBA and NFL leaders.
 - **Match pages** — play-by-play, team statistics, line-ups, and leaders.

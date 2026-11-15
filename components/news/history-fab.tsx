@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { History, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 

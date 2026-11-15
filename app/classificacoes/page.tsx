@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { StandingsTable } from "@/components/sports/standings-table";
 import { EmptyState } from "@/components/ui/empty-state";

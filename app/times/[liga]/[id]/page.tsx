@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/ui/link";
 import { notFound } from "next/navigation";
 
 import { AthletePhoto } from "@/components/sports/athlete-photo";
@@ -122,7 +122,7 @@ export default async function TeamPage({ params }: { params: Params }) {
                         <span className="flex items-center gap-2">
                           <span className="truncate font-medium text-mist-100">{game.opponent}</span>
                           {game.state === "in" ? (
-                            <span className="shrink-0 font-display text-xs font-bold text-live-400">Ao vivo</span>
+                            <span className="shrink-0 font-display text-xs font-bold text-mist-400">Em andamento</span>
                           ) : null}
                         </span>
                         <span className="mt-0.5 flex items-center gap-1.5 text-xs text-mist-500 sm:hidden">

@@ -3,8 +3,6 @@ import { Barlow, Barlow_Condensed } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { LiveStrip } from "@/components/sports/live-strip";
-import { getLiveFixtures } from "@/lib/data";
 import { site } from "@/lib/site";
 
 import "./globals.css";
@@ -38,7 +36,7 @@ export const metadata: Metadata = {
   keywords: [
     "esportes",
     "notícias esportivas",
-    "resultados ao vivo",
+    "resultados",
     "classificações",
     "futebol",
     "basquete",
@@ -88,10 +86,6 @@ const organizationJsonLd = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // A atualização automática (LiveRefresh) fica só nas páginas com placar ao
-  // vivo — home, resultados e partida —, não no layout de todas as páginas.
-  const liveFixtures = await getLiveFixtures();
-
   return (
     <html lang={site.lang} className={`${barlow.variable} ${barlowCondensed.variable}`}>
       <body className="page-backdrop min-h-dvh antialiased">
@@ -107,7 +101,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
 
         <SiteHeader />
-        <LiveStrip fixtures={liveFixtures} />
 
         <main id="conteudo">{children}</main>
 

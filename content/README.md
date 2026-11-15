@@ -73,8 +73,7 @@ Valores aceitos em `kind`: `noticia`, `analise`, `reportagem`, `entrevista`.
     "status": "scheduled",
     "home": { "slug": "flamengo", "name": "Flamengo", "shortName": "FLA", "sport": "futebol" },
     "away": { "slug": "palmeiras", "name": "Palmeiras", "shortName": "PAL", "sport": "futebol" },
-    "venue": "Maracanã",
-    "broadcast": ["TV aberta"]
+    "venue": "Maracanã"
   }
 ]
 ```
@@ -176,22 +175,6 @@ mais recente, marcada com a data.
     ],
     "author": "Nome do autor",
     "publishedAt": "2026-11-10T23:30:00-03:00"
-  }
-]
-```
-
-## `transmissoes.json` → `BroadcastEntry[]` ("Onde assistir")
-
-Casado com a partida coletada por data + nome dos times (sem acento e sem caixa;
-"Atlético-MG" casa com "Atletico Mineiro"). Confira o canal na fonte oficial.
-
-```json
-[
-  {
-    "date": "2026-11-12",
-    "home": "Flamengo",
-    "away": "Palmeiras",
-    "channels": ["Globo", "Premiere"]
   }
 ]
 ```

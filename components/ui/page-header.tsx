@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { Container } from "@/components/ui/icons";
 import { NavIcon } from "@/components/ui/nav-icon";

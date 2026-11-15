@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/link";
 
 import { sports } from "@/lib/sports";
 import { LinkPending } from "@/components/ui/link-pending";

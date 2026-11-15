@@ -40,7 +40,7 @@ export const sports: Sport[] = [
     name: "Basquete",
     shortName: "Basquete",
     glyph: "🏀",
-    blurb: "NBA, com placar ao vivo e classificação por conferência.",
+    blurb: "NBA, com resultados e classificação por conferência.",
     featured: true,
     covered: true,
   },

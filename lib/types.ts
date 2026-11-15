@@ -62,17 +62,6 @@ export type DailyBrief = {
   publishedAt: string;
 };
 
-/**
- * "Onde assistir": curadoria manual em content/transmissoes.json.
- * O casamento com a partida é por data + nomes dos times (sem acento, sem caixa).
- */
-export type BroadcastEntry = {
-  date: string; // YYYY-MM-DD, fuso de Brasília
-  home: string;
-  away: string;
-  channels: string[];
-};
-
 /** Resultado histórico importado do Football-Data.co.uk (sem odds). */
 export type HistoricalMatch = {
   league: string;
@@ -121,8 +110,6 @@ export type Fixture = {
   /** Minuto/período atual quando status = "live" */
   clock?: string;
   venue?: string;
-  /** Onde assistir — preenchido pela curadoria (content/transmissoes.json) */
-  broadcast?: string[];
   /** Origem do dado, para transparência (ex.: "SportAPI") */
   source?: string;
   updatedAt?: string;
